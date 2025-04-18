@@ -15,7 +15,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.6'  # Updated to match Dart 3.7.2
+          flutter-version: '3.29.3'  # ✅ This one has Dart 3.7.2
 
       - name: Install dependencies
         run: flutter pub get
