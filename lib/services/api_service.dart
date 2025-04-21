@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "http://192.168.205.59:8000/api"; // ✅ Use PC's local IP
+  static const String baseUrl = "https://vibezone-backend.fly.dev"; // ✅ Use PC's local IP
 
   static Future<String?> fetchHello() async {
     try {
