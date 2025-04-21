@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';  // adjust path if needed
+import '../services/api_service.dart'; // adjust path if needed
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -9,7 +9,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String message = "Loading...";
+  String? message;
 
   @override
   void initState() {
@@ -18,10 +18,19 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _loadMessage() async {
-    String? response = await ApiService.fetchHello(); // ✅ Correct method name
-    setState(() {
-      message = response ?? "Failed to load message";
-    });
+    try {
+      String? response = await ApiService.fetchHello();
+      print("API Response: $response");
+
+      setState(() {
+        message = response ?? "Failed to load message";
+      });
+    } catch (e) {
+      print("Caught error in _loadMessage: $e");
+      setState(() {
+        message = "Exception occurred";
+      });
+    }
   }
 
   @override
@@ -29,10 +38,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text("Hello from Backend")),
       body: Center(
-        child: Text(
-          message,
-          style: const TextStyle(fontSize: 20),
-        ),
+        child: message == null
+            ? const CircularProgressIndicator() // loading spinner
+            : Text(
+                message!,
+                style: const TextStyle(fontSize: 20),
+              ),
       ),
     );
   }

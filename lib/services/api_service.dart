@@ -6,7 +6,10 @@ class ApiService {
 
   static Future<String?> fetchHello() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/api/hello/"));
+      final response = await http
+    .get(Uri.parse("$baseUrl/api/hello/"))
+    .timeout(Duration(seconds: 5)); // 🔥 Prevent app freezing
+
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body)["message"];
