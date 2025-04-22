@@ -3,11 +3,18 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/home_screen.dart';
 
 Future<void> main() async {
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
-  
-  runApp(const VibezoneApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text("✅ Flutter is working!"),
+        ),
+      ),
+    ),
+  );
 }
+
 
 class VibezoneApp extends StatelessWidget {
   const VibezoneApp({super.key});
