@@ -4,15 +4,11 @@ import 'screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(
-    const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text("✅ Flutter is working!"),
-        ),
-      ),
-    ),
-  );
+
+  // Load environment variables if needed
+  await dotenv.load(fileName: ".env");
+
+  runApp(const VibezoneApp());
 }
 
 
