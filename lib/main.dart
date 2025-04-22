@@ -5,10 +5,22 @@ import 'screens/home_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables if needed
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+    print("✅ .env loaded successfully.");
+  } catch (e) {
+    print("❌ Failed to load .env: $e");
+  }
 
-  runApp(const VibezoneApp());
+  runApp(
+    const MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text("✅ App reached runApp"),
+        ),
+      ),
+    ),
+  );
 }
 
 
