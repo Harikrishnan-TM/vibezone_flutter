@@ -7,20 +7,12 @@ Future<void> main() async {
 
   try {
     await dotenv.load(fileName: ".env");
-    print("✅ .env loaded successfully.");
+    debugPrint("✅ .env loaded successfully.");
   } catch (e) {
-    print("❌ Failed to load .env: $e");
+    debugPrint("❌ Failed to load .env: $e");
   }
 
-  runApp(
-    const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text("✅ App reached runApp"),
-        ),
-      ),
-    ),
-  );
+  runApp(const VibezoneApp());
 }
 
 
