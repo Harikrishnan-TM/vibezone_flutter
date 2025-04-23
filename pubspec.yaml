@@ -17,6 +17,7 @@ dependencies:
   agora_rtc_engine: ^6.2.4
   web_socket_channel: ^2.4.0
   flutter_dotenv: ^5.0.2
+  shared_preferences: ^2.2.2 # ✅ Added required dependency
 
 dev_dependencies:
   flutter_test:
@@ -26,6 +27,6 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
-  # If you want to include images or fonts later:
+  # Assets and fonts (add your assets here if needed)
   # assets:
   #   - assets/

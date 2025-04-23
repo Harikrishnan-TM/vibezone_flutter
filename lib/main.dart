@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'screens/home_screen.dart';
+import 'package:vibezone_flutter/services/auth_service.dart';
+import 'package:vibezone_flutter/screens/login_screen.dart';
+import 'package:vibezone_flutter/screens/signup_screen.dart';
+import 'package:vibezone_flutter/screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables
   try {
     await dotenv.load(fileName: ".env");
     debugPrint("✅ .env loaded successfully.");
@@ -12,12 +16,16 @@ Future<void> main() async {
     debugPrint("❌ Failed to load .env: $e");
   }
 
-  runApp(const VibezoneApp());
+  // Check login status
+  final isLoggedIn = await AuthService().isLoggedIn();
+
+  runApp(VibezoneApp(isLoggedIn: isLoggedIn));
 }
 
-
 class VibezoneApp extends StatelessWidget {
-  const VibezoneApp({super.key});
+  final bool isLoggedIn;
+
+  const VibezoneApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +33,15 @@ class VibezoneApp extends StatelessWidget {
       title: 'Vibezone',
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const HomeScreen(),
+      debugShowCheckedModeBanner: false,
+      initialRoute: isLoggedIn ? '/home' : '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
     );
   }
 }
