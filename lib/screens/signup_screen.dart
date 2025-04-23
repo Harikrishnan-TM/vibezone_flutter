@@ -15,6 +15,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isGirl = false;  // New variable for isGirl
 
   // ✅ Handle signup
   void _signup() async {
@@ -28,7 +29,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final password = _passwordController.text.trim();
       final email = _emailController.text.trim();
 
-      final result = await AuthService().signupUser(username, email, password);
+      final result = await AuthService().signupUser(username, email, password, _isGirl);  // Pass isGirl
 
       if (!mounted) return; // ✅ Prevent use of context if widget disposed
 
@@ -105,6 +106,20 @@ class _SignupScreenState extends State<SignupScreen> {
                   }
                   return null;
                 },
+              ),
+              // Gender selection field (isGirl)
+              Row(
+                children: [
+                  Checkbox(
+                    value: _isGirl,
+                    onChanged: (value) {
+                      setState(() {
+                        _isGirl = value ?? false;  // Update the value of _isGirl
+                      });
+                    },
+                  ),
+                  const Text('Are you a girl?'),
+                ],
               ),
               const SizedBox(height: 20),
               // Show error message if any

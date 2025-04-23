@@ -1,46 +1,44 @@
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Replace with your API URLs
+  // API endpoints
   final String _loginUrl = 'https://vibezone-backend.fly.dev/api/login/';
   final String _signupUrl = 'https://vibezone-backend.fly.dev/api/signup/';
 
-  // Login User
+  // 🔐 Login User
   Future<String> loginUser(String username, String password) async {
-    final url = Uri.parse(_loginUrl);
+    final Uri url = Uri.parse(_loginUrl);
 
     try {
-      final response = await http.post(url, body: {
+      final http.Response response = await http.post(url, body: {
         'username': username,
         'password': password,
       });
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('Login Success! Token: ${data['token']}');
-        
-        // Save token to shared_preferences
+        final Map<String, dynamic> data = jsonDecode(response.body);
         await _saveToken(data['token']);
-        return 'success';  // Indicate successful login
+        print('✅ Login successful: Token saved.');
+        return 'success';
       } else {
-        final errorData = jsonDecode(response.body);
-        print('Login Failed: ${errorData['message']}');
-        return errorData['message'] ?? 'Unknown error';  // Return the error message
+        final Map<String, dynamic> errorData = jsonDecode(response.body);
+        print('❌ Login failed: ${errorData['message']}');
+        return errorData['message'] ?? 'Unknown error occurred.';
       }
-    } catch (error) {
-      print('Error: $error');
-      return 'An error occurred: $error';  // Return error message on exception
+    } catch (e) {
+      print('⚠️ Login error: $e');
+      return 'An error occurred: $e';
     }
   }
 
-  // Signup User
+  // 📝 Signup User
   Future<String> signupUser(String username, String email, String password, bool isGirl) async {
-    final url = Uri.parse(_signupUrl);
+    final Uri url = Uri.parse(_signupUrl);
 
     try {
-      final response = await http.post(url, body: {
+      final http.Response response = await http.post(url, body: {
         'username': username,
         'email': email,
         'password': password,
@@ -48,48 +46,46 @@ class AuthService {
       });
 
       if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        print('Signup Success! Token: ${data['token']}');
-        
-        // Save token to shared_preferences
+        final Map<String, dynamic> data = jsonDecode(response.body);
         await _saveToken(data['token']);
-        return 'success';  // Indicate successful signup
+        print('✅ Signup successful: Token saved.');
+        return 'success';
       } else {
-        final errorData = jsonDecode(response.body);
-        print('Signup Failed: ${errorData['message']}');
-        return errorData['message'] ?? 'Unknown error';  // Return error message
+        final Map<String, dynamic> errorData = jsonDecode(response.body);
+        print('❌ Signup failed: ${errorData['message']}');
+        return errorData['message'] ?? 'Unknown error occurred.';
       }
-    } catch (error) {
-      print('Error: $error');
-      return 'An error occurred: $error';  // Return error message on exception
+    } catch (e) {
+      print('⚠️ Signup error: $e');
+      return 'An error occurred: $e';
     }
   }
 
-  // Save token to shared preferences
+  // 💾 Save token locally
   Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
-    print('Token saved successfully!');
+    print('🔐 Token saved in SharedPreferences');
   }
 
-  // Get token from shared preferences
+  // 📤 Retrieve token
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    print('Retrieved Token: $token');
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('auth_token');
+    print('📥 Retrieved token: $token');
     return token;
   }
 
-  // Remove token from shared preferences
+  // 🗑 Remove token (logout)
   Future<void> removeToken() async {
-    final prefs = await SharedPreferences.getInstance();
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
-    print('Token removed successfully!');
+    print('🚫 Token removed');
   }
 
-  // Check if the user is logged in by checking token
+  // ✅ Check if user is logged in
   Future<bool> isLoggedIn() async {
     final token = await getToken();
-    return token != null;  // Return true if token exists
+    return token != null;
   }
 }
