@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 import '../services/socket_service.dart';
 import '../services/auth_service.dart';
 import 'call_screen.dart'; // <--- Needed for navigating to CallScreen
-import 'package:http/http.dart' as http; // <--- Needed to send POST to backend
+import 'package:http/http.dart' as http; // <--- Needed to send POST to backkend
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
