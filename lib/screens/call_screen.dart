@@ -35,6 +35,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  // Accept incoming call if not initiator
   Future<void> _acceptIncomingCall() async {
     try {
       final response = await ApiService.acceptCall(widget.otherUser);
@@ -53,6 +54,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  // Start the timer for call duration
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       setState(() {
@@ -66,6 +68,7 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
+  // Deduct coins during the call
   Future<void> _deductCoins() async {
     try {
       final response = await ApiService.deductCoins();
@@ -85,6 +88,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  // End the call
   Future<void> _endCall() async {
     try {
       if (_timer.isActive) {
@@ -102,6 +106,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  // Format seconds into minutes:seconds
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;

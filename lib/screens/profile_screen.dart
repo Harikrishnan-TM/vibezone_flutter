@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // You should create/check ApiService methods for these
+import '../services/api_service.dart'; // Make sure ApiService methods exist
 
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+class ProfileScreen extends StatefulWidget { // 🛠️ Updated name
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<ProfileScreen> createState() => _ProfileScreenState(); // 🛠️ Updated name
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
   String username = '';
   int walletCoins = 0;
   bool isGirl = false;
@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Text('|', style: TextStyle(fontSize: 16)),
                     TextButton(
                       onPressed: () {
-                        ApiService.logout(); // Assume you have a logout function
+                        ApiService.logout(); // Make sure logout method exists
                         Navigator.pushReplacementNamed(context, '/login');
                       },
                       child: const Text('Logout'),

@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _connectWebSocket();
   }
 
+  // Load the list of online users
   void _loadUsers() async {
     try {
       List<dynamic>? users = await ApiService.fetchOnlineUsers();
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // Set up socket connection
   void _connectWebSocket() {
     _socketService = SocketService(
       onIncomingCall: () {
@@ -63,27 +65,39 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // Handle user logout
   void _handleLogout() async {
     await AuthService.logout();
     Navigator.pushReplacementNamed(context, '/login');
   }
 
+  // Initiate a call to a user
   Future<void> _initiateCall(String username) async {
     try {
+      final token = await AuthService.getToken(); // Retrieve the token
+      if (token == null) {
+        // Token is null, prompt user to log in
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You are not logged in. Please log in first.')),
+        );
+        return;
+      }
+
       final response = await http.post(
-        Uri.parse('http://your_backend_url/api/call/$username/'), // <-- Update backend URL here
+        Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'), // <-- Update backend URL here
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Token ${await AuthService.getToken()}',
+          'Authorization': 'Token $token', // Pass token here
         },
       );
 
       if (response.statusCode == 200) {
+        // Navigate to CallScreen with the necessary parameters
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => CallScreen(
-              otherUser: username,
+              otherUser: username,  // Pass the 'otherUser' parameter here
               walletCoins: 100, // You can pass real coins dynamically if needed
               isInitiator: true,
             ),
@@ -195,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                _initiateCall(user['username']); // 👈 UPDATED here
+                                _initiateCall(user['username']); // Pass username to initiate call
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
