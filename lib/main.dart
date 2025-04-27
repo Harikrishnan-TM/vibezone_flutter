@@ -4,6 +4,9 @@ import 'package:vibezone_flutter/services/auth_service.dart';
 import 'package:vibezone_flutter/screens/login_screen.dart';
 import 'package:vibezone_flutter/screens/signup_screen.dart';
 import 'package:vibezone_flutter/screens/home_screen.dart';
+import 'package:vibezone_flutter/screens/profile_screen.dart'; // ✅ New
+import 'package:vibezone_flutter/screens/call_screen.dart'; // ✅ New
+import 'package:vibezone_flutter/screens/buy_coins_screen.dart'; // ✅ New
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +44,10 @@ class VibezoneApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
+        '/profile': (context) => const ProfileScreen(), // ✅ New
+        '/call': (context) => const CallScreen(), // ✅ New
+        '/buy-coins': (context) => const BuyCoinsScreen(), // ✅ New
+        
       },
     );
   }

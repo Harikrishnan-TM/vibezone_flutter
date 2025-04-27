@@ -19,7 +19,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        await _saveToken(data['token']);
+        await saveToken(data['token']);
         print('✅ Login successful: Token saved.');
         return 'success';
       } else {
@@ -47,7 +47,7 @@ class AuthService {
 
       if (response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(response.body);
-        await _saveToken(data['token']);
+        await saveToken(data['token']);
         print('✅ Signup successful: Token saved.');
         return 'success';
       } else {
@@ -62,14 +62,14 @@ class AuthService {
   }
 
   // 💾 Save token locally
-  Future<void> _saveToken(String token) async {
+  static Future<void> saveToken(String token) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
     print('🔐 Token saved in SharedPreferences');
   }
 
   // 📤 Retrieve token
-  Future<String?> getToken() async {
+  static Future<String?> getToken() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('auth_token');
     print('📥 Retrieved token: $token');
@@ -77,14 +77,14 @@ class AuthService {
   }
 
   // 🗑 Remove token (logout)
-  Future<void> removeToken() async {
+  static Future<void> logout() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     print('🚫 Token removed');
   }
 
   // ✅ Check if user is logged in
-  Future<bool> isLoggedIn() async {
+  static Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;
   }
