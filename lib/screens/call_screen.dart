@@ -46,11 +46,11 @@ class _CallScreenState extends State<CallScreen> {
         _startTimer();
       } else {
         debugPrint('❌ Failed to accept call');
-        Navigator.pop(context);
+        Navigator.pop(context); // Close the call screen
       }
     } catch (e) {
       debugPrint('⚠️ Error accepting call: $e');
-      Navigator.pop(context);
+      Navigator.pop(context); // Close the call screen
     }
   }
 
@@ -94,14 +94,14 @@ class _CallScreenState extends State<CallScreen> {
       if (_timer.isActive) {
         _timer.cancel();
       }
-      await ApiService.endCall(widget.otherUser);
+      await ApiService.endCall(widget.otherUser); // Notify backend to end the call
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close the call screen
       }
     } catch (e) {
       debugPrint('⚠️ Error ending call: $e');
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context); // Close the call screen
       }
     }
   }

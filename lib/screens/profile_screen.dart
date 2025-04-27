@@ -2,14 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart'; // Make sure ApiService methods exist
 
-class ProfileScreen extends StatefulWidget { // 🛠️ Updated name
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState(); // 🛠️ Updated name
+  State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
+class _ProfileScreenState extends State<ProfileScreen> {
   String username = '';
   int walletCoins = 0;
   bool isGirl = false;
@@ -24,6 +24,7 @@ class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
     _startIncomingCallChecker();
   }
 
+  // Fetch the user's profile data
   Future<void> _fetchProfileData() async {
     final profile = await ApiService.fetchProfile();
     if (profile != null) {
@@ -36,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
     }
   }
 
+  // Periodically check for incoming calls
   void _startIncomingCallChecker() {
     _callCheckTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       final data = await ApiService.checkIncomingCall();
@@ -51,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
     });
   }
 
+  // Toggle online status of the user
   Future<void> _toggleOnlineStatus() async {
     final success = await ApiService.toggleOnlineStatus(!isOnline);
     if (success) {
@@ -120,7 +123,7 @@ class _ProfileScreenState extends State<ProfileScreen> { // 🛠️ Updated name
                     const Text('|', style: TextStyle(fontSize: 16)),
                     TextButton(
                       onPressed: () {
-                        ApiService.logout(); // Make sure logout method exists
+                        ApiService.logout(); // Ensure logout method exists
                         Navigator.pushReplacementNamed(context, '/login');
                       },
                       child: const Text('Logout'),

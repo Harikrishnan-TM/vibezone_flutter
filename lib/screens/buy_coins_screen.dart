@@ -11,6 +11,7 @@ class BuyCoinsScreen extends StatefulWidget {
 class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
   final _coinsController = TextEditingController();
   String? _message;
+  bool _isLoading = false;  // Track loading state for better user experience
 
   @override
   void dispose() {
@@ -18,6 +19,7 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
     super.dispose();
   }
 
+  // Method to handle coin purchasing logic
   Future<void> _buyCoins() async {
     final coins = int.tryParse(_coinsController.text);
     if (coins == null || coins < 1) {
@@ -27,14 +29,29 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
       return;
     }
 
-    final response = await ApiService.buyCoins(coins);
-    if (response != null && response['message'] != null) {
+    setState(() {
+      _isLoading = true;  // Set loading state to true when starting the purchase
+      _message = null;  // Clear previous messages
+    });
+
+    try {
+      final response = await ApiService.buyCoins(coins);  // Interact with the backend
+      if (response != null && response['message'] != null) {
+        setState(() {
+          _message = response['message'];  // Success or failure message from backend
+        });
+      } else {
+        setState(() {
+          _message = 'Failed to purchase coins. Try again later.';
+        });
+      }
+    } catch (e) {
       setState(() {
-        _message = response['message']; // Success message from backend
+        _message = 'An error occurred while purchasing coins: $e';  // Handle any network or server error
       });
-    } else {
+    } finally {
       setState(() {
-        _message = 'Failed to purchase coins. Try again!';
+        _isLoading = false;  // Set loading state to false once the operation is complete
       });
     }
   }
@@ -67,8 +84,10 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _buyCoins,
-              child: const Text('Buy'),
+              onPressed: _isLoading ? null : _buyCoins,  // Disable button while loading
+              child: _isLoading
+                  ? const CircularProgressIndicator()  // Show loading indicator when buying coins
+                  : const Text('Buy'),
               style: ElevatedButton.styleFrom(
                 primary: Colors.deepPurple,
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),

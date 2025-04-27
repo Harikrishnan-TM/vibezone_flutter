@@ -19,8 +19,8 @@ Future<void> main() async {
     debugPrint("❌ Failed to load .env: $e");
   }
 
-  // Check login status
-  final isLoggedIn = await AuthService().isLoggedIn();
+  // Check login status using AuthService
+  final bool isLoggedIn = await AuthService().isLoggedIn(); // Ensure isLoggedIn is correctly implemented
 
   runApp(VibezoneApp(isLoggedIn: isLoggedIn));
 }
@@ -43,11 +43,10 @@ class VibezoneApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const HomeScreen(), // Ensure HomeScreen is correctly implemented
         '/profile': (context) => const ProfileScreen(), // ✅ New
         '/call': (context) => const CallScreen(), // ✅ New
         '/buy-coins': (context) => const BuyCoinsScreen(), // ✅ New
-        
       },
     );
   }

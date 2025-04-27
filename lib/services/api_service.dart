@@ -41,13 +41,13 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/api/online-users/'));
 
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        return json.decode(response.body); // Return the list of online users
       } else {
         debugPrint("⚠️ Error fetching online users - Status: ${response.statusCode}");
         return null;
       }
     } catch (e) {
-      debugPrint('❌ Exception while fetching users: $e');
+      debugPrint('❌ Exception while fetching online users: $e');
       return null;
     }
   }
@@ -130,13 +130,73 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return the response indicating call has ended
+        return json.decode(response.body); // Return the response indicating the call has ended
       } else {
         debugPrint('⚠️ Error ending call: ${response.body}');
         return null;
       }
     } catch (e) {
       debugPrint('❌ Exception during endCall: $e');
+      return null;
+    }
+  }
+
+  // 🟢 Buy Coins
+  static Future<Map<String, dynamic>?> buyCoins(int amount) async {
+    final String? token = await AuthService().getToken();
+    if (token == null) {
+      debugPrint('❌ No auth token found.');
+      return null;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/buy-coins/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'coins': amount}),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body); // Return success or failure message from backend
+      } else {
+        debugPrint('⚠️ Error buying coins: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Exception buying coins: $e');
+      return null;
+    }
+  }
+
+  // 🟡 Toggle Online Status
+  static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
+    final String? token = await AuthService().getToken();
+    if (token == null) {
+      debugPrint('❌ No auth token found.');
+      return null;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/toggle-online-status/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'is_online': isOnline}),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body); // Return success or failure message from backend
+      } else {
+        debugPrint('⚠️ Error toggling online status: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Exception toggling online status: $e');
       return null;
     }
   }

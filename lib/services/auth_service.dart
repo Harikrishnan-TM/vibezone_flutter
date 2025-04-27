@@ -63,24 +63,37 @@ class AuthService {
 
   // 💾 Save token locally
   static Future<void> saveToken(String token) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-    print('🔐 Token saved in SharedPreferences');
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      print('🔐 Token saved in SharedPreferences');
+    } catch (e) {
+      print('❌ Error saving token: $e');
+    }
   }
 
   // 📤 Retrieve token
   static Future<String?> getToken() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('auth_token');
-    print('📥 Retrieved token: $token');
-    return token;
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? token = prefs.getString('auth_token');
+      print('📥 Retrieved token: $token');
+      return token;
+    } catch (e) {
+      print('❌ Error retrieving token: $e');
+      return null;
+    }
   }
 
   // 🗑 Remove token (logout)
   static Future<void> logout() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-    print('🚫 Token removed');
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      print('🚫 Token removed');
+    } catch (e) {
+      print('❌ Error removing token: $e');
+    }
   }
 
   // ✅ Check if user is logged in
