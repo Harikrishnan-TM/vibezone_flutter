@@ -49,6 +49,7 @@ class VibezoneApp extends StatelessWidget {
         '/call': (context) => CallScreen(
           otherUser: 'defaultUser', // Pass the required 'otherUser'
           walletCoins: 100, // Provide the walletCoins parameter
+          isInitiator: true, // Provide the 'isInitiator' parameter
         ),
         '/buy-coins': (context) => const BuyCoinsScreen(),
       },
