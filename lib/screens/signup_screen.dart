@@ -39,7 +39,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (result == 'success') {
         // Navigate to login page after successful signup
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/home'); // or your real home route
+
+        //Navigator.pushReplacementNamed(context, '/login');
       } else {
         // Display error message
         setState(() {
