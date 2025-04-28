@@ -89,7 +89,8 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
                   ? const CircularProgressIndicator()  // Show loading indicator when buying coins
                   : const Text('Buy'),
               style: ElevatedButton.styleFrom(
-                primary: Colors.deepPurple,
+                backgroundColor: Colors.deepPurple,  // Updated to use backgroundColor
+                foregroundColor: Colors.white,       // Optional: set text color
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
             ),

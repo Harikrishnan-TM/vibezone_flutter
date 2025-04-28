@@ -67,9 +67,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Handle user logout
   void _handleLogout() async {
-    await AuthService.logout();
-    Navigator.pushReplacementNamed(context, '/login');
-  }
+  await AuthService.logout();
+  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+}
+
 
   // Initiate a call to a user
   Future<void> _initiateCall(String username) async {

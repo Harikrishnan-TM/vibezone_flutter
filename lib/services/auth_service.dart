@@ -98,7 +98,7 @@ class AuthService {
 
   // ✅ Check if user is logged in
   static Future<bool> isLoggedIn() async {
-    final token = await getToken();
+    final token = await AuthService.getToken();
     return token != null;
   }
 }

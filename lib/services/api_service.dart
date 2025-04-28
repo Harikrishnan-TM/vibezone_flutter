@@ -203,34 +203,47 @@ class ApiService {
 
 
   // 🟡 Toggle Online Status
-  static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
-    final String? token = await AuthService().getToken();
-    if (token == null) {
-      debugPrint('❌ No auth token found.');
-      return null;
-    }
+  // 🟡 Toggle Online Status
+static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
+  final String? token = await AuthService().getToken();
+  if (token == null) {
+    debugPrint('❌ No auth token found.');
+    return null;
+  }
 
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/toggle-online-status/'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'is_online': isOnline}),
-      );
+  try {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/toggle-online-status/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'is_online': isOnline}),
+    );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body); // Return success or failure message from backend
+    if (response.statusCode == 200) {
+      final responseBody = json.decode(response.body);
+      if (responseBody != null && responseBody.containsKey('data')) {
+        return responseBody['data']; // Return the 'data' object if present
       } else {
-        debugPrint('⚠️ Error toggling online status: ${response.body}');
+        debugPrint("⚠️ Response does not contain 'data'.");
         return null;
       }
-    } catch (e) {
-      debugPrint('❌ Exception toggling online status: $e');
+    } else if (response.statusCode == 401) {
+      debugPrint('⚠️ Unauthorized, token may have expired.');
+      // Optionally log out the user and redirect to the login page
+      await AuthService().logout();
+      return null;
+    } else {
+      debugPrint('⚠️ Error toggling online status: ${response.body}');
       return null;
     }
+  } catch (e) {
+    debugPrint('❌ Exception toggling online status: $e');
+    return null;
   }
+}
+
 
   // 🟣 Logout (Optional API call + local logout)
   static Future<void> logout() async {

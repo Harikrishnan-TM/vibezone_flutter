@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // Make sure ApiService methods exist
+import '../services/api_service.dart';
+import '../services/auth_service.dart'; // Import AuthService
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -27,12 +28,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Fetch the user's profile data
   Future<void> _fetchProfileData() async {
     final profile = await ApiService.fetchProfile();
-    if (profile != null) {
+    if (profile != null && profile['success'] == true && profile['data'] != null) {
       setState(() {
-        username = profile['username'] ?? '';
-        walletCoins = profile['wallet_coins'] ?? 0;
-        isGirl = profile['is_girl'] ?? false;
-        isOnline = profile['is_online'] ?? false;
+        username = profile['data']['username'] ?? '';  // Access 'data' field
+        walletCoins = profile['data']['coins'] ?? 0;  // Access 'data' field for coins
+        isGirl = profile['data']['is_girl'] ?? false;  // Access 'data' field for 'is_girl'
+        isOnline = profile['data']['is_online'] ?? false;  // Access 'data' field for 'is_online'
       });
     }
   }
@@ -55,10 +56,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Toggle online status of the user
   Future<void> _toggleOnlineStatus() async {
-    final success = await ApiService.toggleOnlineStatus(!isOnline);
-    if (success) {
+    final response = await ApiService.toggleOnlineStatus(!isOnline);
+    
+    // Check if the response is valid and contains the required data
+    if (response != null && response['success'] == true) {
       setState(() {
-        isOnline = !isOnline;
+        isOnline = response['data']['is_online']; // Use the 'is_online' from the API response
       });
     }
   }
@@ -122,9 +125,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     const Text('|', style: TextStyle(fontSize: 16)),
                     TextButton(
-                      onPressed: () {
-                        ApiService.logout(); // Ensure logout method exists
-                        Navigator.pushReplacementNamed(context, '/login');
+                      onPressed: () async {
+                        await AuthService.logout();
+                        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
                       },
                       child: const Text('Logout'),
                     ),
