@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/socket_service.dart';
 import '../services/auth_service.dart';
-import 'call_screen.dart'; 
-import 'package:http/http.dart' as http; 
+import 'call_screen.dart';
+import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -70,14 +70,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handleLogout() async {
-    await AuthService().logout();
+    await AuthService.logout(); // Use static method directly
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   Future<void> _initiateCall(String username) async {
     try {
-      final token = await AuthService().getToken();
+      final token = await AuthService.getToken();
       if (token == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
