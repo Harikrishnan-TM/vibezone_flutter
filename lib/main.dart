@@ -46,7 +46,10 @@ class VibezoneApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/call': (context) => const CallScreen(otherUser: 'defaultUser'), // ✅ Provide otherUser properly here
+        '/call': (context) => CallScreen(
+          otherUser: 'defaultUser', // Pass the required 'otherUser'
+          walletCoins: 100, // Provide the walletCoins parameter
+        ),
         '/buy-coins': (context) => const BuyCoinsScreen(),
       },
     );
