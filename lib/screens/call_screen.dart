@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart'; // ✅ API Service import
+import '../services/auth_service.dart'; // ✅ AuthService import
 
 class CallScreen extends StatefulWidget {
-  final String otherUser; // Username of the user we are talking to
-  final int walletCoins;  // Current user's starting coins
-  final bool isInitiator; // Whether I started the call
+  final String otherUser;   // Username of the user we are talking to
+  final int walletCoins;    // Current user's starting coins
+  final bool isInitiator;   // Whether I started the call
 
   const CallScreen({
     Key? key,
@@ -19,59 +20,70 @@ class CallScreen extends StatefulWidget {
 }
 
 class _CallScreenState extends State<CallScreen> {
-  late Timer _timer;
+  Timer? _timer;
   int _secondsElapsed = 0;
   bool _accepted = false;
-  int _currentCoins = 0; // Track real-time coins
+  late int _currentCoins;
+  late String? _token;
 
   @override
   void initState() {
     super.initState();
     _currentCoins = widget.walletCoins;
+    _getToken(); // Get user token
+
     if (!widget.isInitiator) {
-      _acceptIncomingCall(); // If not initiator, accept the call first
+      _acceptIncomingCall(); // Not initiator -> wait for accept
     } else {
-      _startTimer();
+      _startTimer(); // Initiator -> start call immediately
+    }
+  }
+
+  // Retrieve user token (assuming `getToken` is defined in AuthService)
+  Future<void> _getToken() async {
+    try {
+      _token = await AuthService().getToken(); // Assuming getToken method exists
+    } catch (e) {
+      debugPrint('⚠️ Error retrieving token: $e');
     }
   }
 
   // Accept incoming call if not initiator
   Future<void> _acceptIncomingCall() async {
     try {
-      final response = await ApiService.acceptCall(widget.otherUser);
+      final response = await ApiService.acceptCall(widget.otherUser, _token); // Pass token to API
       if (response != null && response['accepted'] == true) {
         setState(() {
           _accepted = true;
         });
         _startTimer();
       } else {
-        debugPrint('❌ Failed to accept call');
-        Navigator.pop(context); // Close the call screen
+        debugPrint('❌ Call not accepted');
+        _closeScreen();
       }
     } catch (e) {
       debugPrint('⚠️ Error accepting call: $e');
-      Navigator.pop(context); // Close the call screen
+      _closeScreen();
     }
   }
 
-  // Start the timer for call duration
+  // Start timer for call duration
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       setState(() {
         _secondsElapsed++;
       });
 
-      // Deduct coins every full minute
       if (_secondsElapsed % 60 == 0) {
         await _deductCoins();
       }
     });
   }
 
-  // Deduct coins during the call
+  // Deduct coins
   Future<void> _deductCoins() async {
     try {
-      final response = await ApiService.deductCoins();
+      final response = await ApiService.deductCoins(_token); // Pass token to API
       if (response != null) {
         if (response['success'] == true) {
           setState(() {
@@ -79,8 +91,8 @@ class _CallScreenState extends State<CallScreen> {
           });
         }
         if (response['end_call'] == true) {
-          debugPrint('❌ Coins finished. Ending call.');
-          _endCall(); // Auto end call if coins are insufficient
+          debugPrint('❌ Coins over. Ending call.');
+          _endCall();
         }
       }
     } catch (e) {
@@ -91,22 +103,23 @@ class _CallScreenState extends State<CallScreen> {
   // End the call
   Future<void> _endCall() async {
     try {
-      if (_timer.isActive) {
-        _timer.cancel();
-      }
-      await ApiService.endCall(widget.otherUser); // Notify backend to end the call
-      if (mounted) {
-        Navigator.pop(context); // Close the call screen
-      }
+      _timer?.cancel();
+      await ApiService.endCall(widget.otherUser, _token); // Pass token to API
     } catch (e) {
       debugPrint('⚠️ Error ending call: $e');
-      if (mounted) {
-        Navigator.pop(context); // Close the call screen
-      }
+    } finally {
+      _closeScreen();
     }
   }
 
-  // Format seconds into minutes:seconds
+  // Close screen safely
+  void _closeScreen() {
+    if (mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  // Format time mm:ss
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -115,9 +128,7 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
-    if (_timer.isActive) {
-      _timer.cancel();
-    }
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -130,7 +141,7 @@ class _CallScreenState extends State<CallScreen> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -148,12 +159,12 @@ class _CallScreenState extends State<CallScreen> {
               )
             else
               const Text(
-                "Waiting for call acceptance...",
+                "Waiting for acceptance...",
                 style: TextStyle(fontSize: 18, color: Colors.orange),
               ),
             const SizedBox(height: 20),
             Text(
-              "Coins: $_currentCoins",
+              "Coins Left: $_currentCoins",
               style: const TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 40),

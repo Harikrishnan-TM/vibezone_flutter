@@ -171,6 +171,37 @@ class ApiService {
     }
   }
 
+
+
+  // 🟣 Check Incoming Call
+  static Future<Map<String, dynamic>?> checkIncomingCall() async {
+    final String? token = await AuthService().getToken();
+    if (token == null) {
+      debugPrint('❌ No auth token found.');
+      return null;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/check-incoming-call/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        debugPrint('⚠️ Error checking incoming call: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Exception while checking incoming call: $e');
+      return null;
+    }
+  }
+
+
   // 🟡 Toggle Online Status
   static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
     final String? token = await AuthService().getToken();
@@ -200,4 +231,37 @@ class ApiService {
       return null;
     }
   }
+
+  // 🟣 Logout (Optional API call + local logout)
+  static Future<void> logout() async {
+    final String? token = await AuthService().getToken();
+    if (token == null) {
+      debugPrint('❌ No auth token found.');
+      return;
+    }
+
+    try {
+      await http.post(
+        Uri.parse('$baseUrl/api/logout/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ Exception during API logout: $e');
+    }
+
+    // Always clear token locally
+    await AuthService().logout();
+  }
+
+
+  
 }
+
+
+
+
+
+
+  
