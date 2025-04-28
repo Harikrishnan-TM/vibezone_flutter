@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart'; // ✅ API Service import
-import '../services/auth_service.dart'; // ✅ AuthService import
 
 class CallScreen extends StatefulWidget {
   final String otherUser;   // Username of the user we are talking to
@@ -24,34 +23,23 @@ class _CallScreenState extends State<CallScreen> {
   int _secondsElapsed = 0;
   bool _accepted = false;
   late int _currentCoins;
-  late String? _token;
 
   @override
   void initState() {
     super.initState();
     _currentCoins = widget.walletCoins;
-    _getToken(); // Get user token
 
     if (!widget.isInitiator) {
-      _acceptIncomingCall(); // Not initiator -> wait for accept
+      _acceptIncomingCall(); // If not initiator, wait for call acceptance
     } else {
-      _startTimer(); // Initiator -> start call immediately
+      _startTimer(); // If initiator, start call immediately
     }
   }
 
-  // Retrieve user token (assuming `getToken` is defined in AuthService)
-  Future<void> _getToken() async {
-    try {
-      _token = await AuthService().getToken(); // Assuming getToken method exists
-    } catch (e) {
-      debugPrint('⚠️ Error retrieving token: $e');
-    }
-  }
-
-  // Accept incoming call if not initiator
+  // Accept incoming call
   Future<void> _acceptIncomingCall() async {
     try {
-      final response = await ApiService.acceptCall(widget.otherUser, _token); // Pass token to API
+      final response = await ApiService.acceptCall(widget.otherUser);
       if (response != null && response['accepted'] == true) {
         setState(() {
           _accepted = true;
@@ -67,7 +55,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  // Start timer for call duration
+  // Start call timer
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       setState(() {
@@ -80,10 +68,10 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
-  // Deduct coins
+  // Deduct coins every minute
   Future<void> _deductCoins() async {
     try {
-      final response = await ApiService.deductCoins(_token); // Pass token to API
+      final response = await ApiService.deductCoins();
       if (response != null) {
         if (response['success'] == true) {
           setState(() {
@@ -104,7 +92,7 @@ class _CallScreenState extends State<CallScreen> {
   Future<void> _endCall() async {
     try {
       _timer?.cancel();
-      await ApiService.endCall(widget.otherUser, _token); // Pass token to API
+      await ApiService.endCall(widget.otherUser);
     } catch (e) {
       debugPrint('⚠️ Error ending call: $e');
     } finally {
@@ -119,7 +107,7 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  // Format time mm:ss
+  // Format seconds into mm:ss
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;

@@ -8,30 +8,30 @@ class ApiService {
 
   // 🔵 Fetch Profile Data
   static Future<Map<String, dynamic>?> fetchProfile() async {
-    final String? token = await AuthService().getToken(); // Get the token
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
 
     if (token == null) {
       debugPrint('❌ No auth token found.');
-      return null; // If there's no token, return null
+      return null;
     }
 
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/api/profile/'),
         headers: {
-          'Authorization': 'Bearer $token', // Include the token in headers
+          'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Return the profile data if successful
+        return jsonDecode(response.body);
       } else {
         debugPrint("⚠️ Failed to fetch profile: ${response.body}");
         return null;
       }
     } catch (e) {
       debugPrint("❌ Exception fetching profile: $e");
-      return null; // Return null if an exception occurs
+      return null;
     }
   }
 
@@ -41,7 +41,7 @@ class ApiService {
       final response = await http.get(Uri.parse('$baseUrl/api/online-users/'));
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return the list of online users
+        return json.decode(response.body);
       } else {
         debugPrint("⚠️ Error fetching online users - Status: ${response.statusCode}");
         return null;
@@ -54,7 +54,7 @@ class ApiService {
 
   // 🟩 Accept Incoming Call
   static Future<Map<String, dynamic>?> acceptCall(String otherUser) async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -71,7 +71,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return the response if successful
+        return json.decode(response.body);
       } else {
         debugPrint('⚠️ Error accepting call: ${response.body}');
         return null;
@@ -84,7 +84,7 @@ class ApiService {
 
   // 🟩 Deduct Coins During Call
   static Future<Map<String, dynamic>?> deductCoins() async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -100,7 +100,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return the updated coins and status
+        return json.decode(response.body);
       } else {
         debugPrint('⚠️ Error deducting coins: ${response.body}');
         return null;
@@ -113,7 +113,7 @@ class ApiService {
 
   // 🟩 End Call
   static Future<Map<String, dynamic>?> endCall(String otherUser) async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -130,7 +130,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return the response indicating the call has ended
+        return json.decode(response.body);
       } else {
         debugPrint('⚠️ Error ending call: ${response.body}');
         return null;
@@ -143,7 +143,7 @@ class ApiService {
 
   // 🟢 Buy Coins
   static Future<Map<String, dynamic>?> buyCoins(int amount) async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -160,7 +160,7 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return json.decode(response.body); // Return success or failure message from backend
+        return json.decode(response.body);
       } else {
         debugPrint('⚠️ Error buying coins: ${response.body}');
         return null;
@@ -171,11 +171,9 @@ class ApiService {
     }
   }
 
-
-
   // 🟣 Check Incoming Call
   static Future<Map<String, dynamic>?> checkIncomingCall() async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -201,53 +199,49 @@ class ApiService {
     }
   }
 
-
   // 🟡 Toggle Online Status
-  // 🟡 Toggle Online Status
-static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
-  final String? token = await AuthService().getToken();
-  if (token == null) {
-    debugPrint('❌ No auth token found.');
-    return null;
-  }
-
-  try {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/toggle-online-status/'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'is_online': isOnline}),
-    );
-
-    if (response.statusCode == 200) {
-      final responseBody = json.decode(response.body);
-      if (responseBody != null && responseBody.containsKey('data')) {
-        return responseBody['data']; // Return the 'data' object if present
-      } else {
-        debugPrint("⚠️ Response does not contain 'data'.");
-        return null;
-      }
-    } else if (response.statusCode == 401) {
-      debugPrint('⚠️ Unauthorized, token may have expired.');
-      // Optionally log out the user and redirect to the login page
-      await AuthService().logout();
-      return null;
-    } else {
-      debugPrint('⚠️ Error toggling online status: ${response.body}');
+  static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    if (token == null) {
+      debugPrint('❌ No auth token found.');
       return null;
     }
-  } catch (e) {
-    debugPrint('❌ Exception toggling online status: $e');
-    return null;
-  }
-}
 
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/toggle-online-status/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'is_online': isOnline}),
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        if (responseBody != null && responseBody.containsKey('data')) {
+          return responseBody['data'];
+        } else {
+          debugPrint("⚠️ Response does not contain 'data'.");
+          return null;
+        }
+      } else if (response.statusCode == 401) {
+        debugPrint('⚠️ Unauthorized, token may have expired.');
+        await AuthService.logout(); // 🔥 FIXED
+        return null;
+      } else {
+        debugPrint('⚠️ Error toggling online status: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('❌ Exception toggling online status: $e');
+      return null;
+    }
+  }
 
   // 🟣 Logout (Optional API call + local logout)
   static Future<void> logout() async {
-    final String? token = await AuthService().getToken();
+    final String? token = await AuthService.getToken(); // 🔥 FIXED
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return;
@@ -264,17 +258,6 @@ static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
       debugPrint('❌ Exception during API logout: $e');
     }
 
-    // Always clear token locally
-    await AuthService().logout();
+    await AuthService.logout(); // 🔥 FIXED
   }
-
-
-  
 }
-
-
-
-
-
-
-  

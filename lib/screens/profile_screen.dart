@@ -27,42 +27,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Fetch the user's profile data
   Future<void> _fetchProfileData() async {
-    final profile = await ApiService.fetchProfile();
-    if (profile != null && profile['success'] == true && profile['data'] != null) {
-      setState(() {
-        username = profile['data']['username'] ?? '';  // Access 'data' field
-        walletCoins = profile['data']['coins'] ?? 0;  // Access 'data' field for coins
-        isGirl = profile['data']['is_girl'] ?? false;  // Access 'data' field for 'is_girl'
-        isOnline = profile['data']['is_online'] ?? false;  // Access 'data' field for 'is_online'
-      });
+    try {
+      final profile = await ApiService.fetchProfile();
+      if (mounted && profile != null && profile['success'] == true && profile['data'] != null) {
+        setState(() {
+          username = profile['data']['username'] ?? '';
+          walletCoins = profile['data']['coins'] ?? 0;
+          isGirl = profile['data']['is_girl'] ?? false;
+          isOnline = profile['data']['is_online'] ?? false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch profile')),
+        );
+      }
     }
   }
 
   // Periodically check for incoming calls
   void _startIncomingCallChecker() {
     _callCheckTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
-      final data = await ApiService.checkIncomingCall();
-      if (data != null && data['being_called'] == true && !incomingCallOverlayVisible) {
-        setState(() {
-          incomingCallOverlayVisible = true;
-        });
-        await Future.delayed(const Duration(seconds: 1));
-        if (mounted) {
-          Navigator.pushNamed(context, '/call');
+      try {
+        final data = await ApiService.checkIncomingCall();
+        if (mounted && data != null && data['being_called'] == true && !incomingCallOverlayVisible) {
+          setState(() {
+            incomingCallOverlayVisible = true;
+          });
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) {
+            Navigator.pushNamed(context, '/call');
+          }
         }
+      } catch (e) {
+        // Ignore errors silently for periodic checks
       }
     });
   }
 
   // Toggle online status of the user
   Future<void> _toggleOnlineStatus() async {
-    final response = await ApiService.toggleOnlineStatus(!isOnline);
-    
-    // Check if the response is valid and contains the required data
-    if (response != null && response['success'] == true) {
-      setState(() {
-        isOnline = response['data']['is_online']; // Use the 'is_online' from the API response
-      });
+    try {
+      final response = await ApiService.toggleOnlineStatus(!isOnline);
+      if (mounted && response != null && response['success'] == true) {
+        setState(() {
+          isOnline = response['data']['is_online'];
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to toggle status')),
+        );
+      }
     }
   }
 
@@ -113,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 20),
                 ],
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -127,7 +145,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     TextButton(
                       onPressed: () async {
                         await AuthService.logout();
-                        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                        if (mounted) {
+                          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                        }
                       },
                       child: const Text('Logout'),
                     ),
@@ -138,16 +158,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           // Incoming call overlay
-          if (incomingCallOverlayVisible)
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.black.withOpacity(0.75),
-              child: Center(
-                child: AnimatedOpacity(
-                  opacity: incomingCallOverlayVisible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 500),
-                  child: const Text(
+          AnimatedOpacity(
+            opacity: incomingCallOverlayVisible ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 500),
+            child: Visibility(
+              visible: incomingCallOverlayVisible,
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                color: Colors.black.withOpacity(0.75),
+                child: const Center(
+                  child: Text(
                     '📞 Incoming Call...',
                     style: TextStyle(
                       fontSize: 24,
@@ -158,6 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

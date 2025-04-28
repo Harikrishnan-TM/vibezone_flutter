@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/socket_service.dart';
 import '../services/auth_service.dart';
-import 'call_screen.dart'; // <--- Needed for navigating to CallScreen
-import 'package:http/http.dart' as http; // <--- Needed to send POST to backkend
+import 'call_screen.dart'; 
+import 'package:http/http.dart' as http; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -25,35 +25,39 @@ class _HomeScreenState extends State<HomeScreen> {
     _connectWebSocket();
   }
 
-  // Load the list of online users
   void _loadUsers() async {
     try {
       List<dynamic>? users = await ApiService.fetchOnlineUsers();
-      if (users != null) {
+      if (users != null && mounted) {
         setState(() {
           onlineUsers = users;
         });
       }
     } catch (e) {
-      print('Failed to load users: $e');
+      debugPrint('Failed to load users: $e');
     }
   }
 
-  // Set up socket connection
   void _connectWebSocket() {
     _socketService = SocketService(
       onIncomingCall: () {
-        setState(() {
-          incomingCall = true;
-        });
-        Future.delayed(const Duration(seconds: 1), () {
-          Navigator.pushNamed(context, '/call');
-        });
+        if (mounted) {
+          setState(() {
+            incomingCall = true;
+          });
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              Navigator.pushNamed(context, '/call');
+            }
+          });
+        }
       },
       onRefreshUsers: (List<dynamic> newUsers) {
-        setState(() {
-          onlineUsers = newUsers..shuffle();
-        });
+        if (mounted) {
+          setState(() {
+            onlineUsers = newUsers..shuffle();
+          });
+        }
       },
     );
     _socketService.connect();
@@ -65,55 +69,55 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // Handle user logout
   void _handleLogout() async {
-  await AuthService.logout();
-  Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-}
+    await AuthService().logout();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
 
-
-  // Initiate a call to a user
   Future<void> _initiateCall(String username) async {
     try {
-      final token = await AuthService.getToken(); // Retrieve the token
+      final token = await AuthService().getToken();
       if (token == null) {
-        // Token is null, prompt user to log in
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You are not logged in. Please log in first.')),
+          const SnackBar(content: Text('You are not logged in. Please log in first.')),
         );
         return;
       }
 
       final response = await http.post(
-        Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'), // <-- Update backend URL here
+        Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Token $token', // Pass token here
+          'Authorization': 'Bearer $token', // ✅ Corrected here
         },
       );
 
       if (response.statusCode == 200) {
-        // Navigate to CallScreen with the necessary parameters
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => CallScreen(
-              otherUser: username,  // Pass the 'otherUser' parameter here
-              walletCoins: 100, // You can pass real coins dynamically if needed
+              otherUser: username,
+              walletCoins: 100, // You can fetch dynamically later if needed
               isInitiator: true,
             ),
           ),
         );
       } else {
         final errorData = jsonDecode(response.body);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorData['error'] ?? 'Failed to initiate call')),
         );
       }
     } catch (e) {
-      print('Call error: $e');
+      debugPrint('Call error: $e');
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Network error')),
+        const SnackBar(content: Text('Network error')),
       );
     }
   }
@@ -136,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Top Bar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -148,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () {
-                            // navigate to buy coins page
+                            // Navigate to buy coins page
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
@@ -174,7 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                // Horizontal scroll list
                 Expanded(
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
@@ -187,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black12,
                               blurRadius: 4,
@@ -209,9 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             ElevatedButton(
-                              onPressed: () {
-                                _initiateCall(user['username']); // Pass username to initiate call
-                              },
+                              onPressed: () => _initiateCall(user['username']),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.green,
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -236,13 +236,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
+                  children: const [
+                    Text(
                       '📞 Incoming Call...',
                       style: TextStyle(color: Colors.white, fontSize: 28),
                     ),
-                    const SizedBox(height: 20),
-                    const CircularProgressIndicator(color: Colors.white),
+                    SizedBox(height: 20),
+                    CircularProgressIndicator(color: Colors.white),
                   ],
                 ),
               ),
