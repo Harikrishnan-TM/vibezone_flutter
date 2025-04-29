@@ -22,7 +22,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUsers();
-    _connectWebSocket();
+    // 🔧 Temporarily disabled to test WebSocket causing redirect
+    // _connectWebSocket();
   }
 
   void _loadUsers() async {
@@ -89,6 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    // Still disconnect safely even if it wasn’t called (no harm)
     _socketService.disconnect();
     super.dispose();
   }
