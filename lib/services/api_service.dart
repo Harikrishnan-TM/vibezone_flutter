@@ -19,7 +19,9 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/api/profile/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
+
         },
       );
 
@@ -94,7 +96,8 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/deduct-coins/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
       );
@@ -123,7 +126,8 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/end-call/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
         body: json.encode({'username': otherUser}),
@@ -153,7 +157,8 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/buy-coins/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
         body: json.encode({'coins': amount}),
@@ -183,7 +188,8 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/api/check-incoming-call/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
         },
       );
 
@@ -211,7 +217,8 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/toggle-online-status/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
         body: json.encode({'is_online': isOnline}),
@@ -251,7 +258,9 @@ class ApiService {
       await http.post(
         Uri.parse('$baseUrl/api/logout/'),
         headers: {
-          'Authorization': 'Bearer $token',
+            
+          'Authorization': 'Token $token',
+          //'Authorization': 'Bearer $token',
         },
       );
     } catch (e) {
