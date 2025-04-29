@@ -41,7 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 🔌 Setup WebSocket and listeners
   void _connectWebSocket() {
-    _socketService = SocketService(
+    // Get the SocketService singleton instance
+    _socketService = SocketService.getInstance();
+    
+    // Register the callbacks
+    _socketService.registerCallbacks(
       onIncomingCall: () {
         if (mounted) {
           setState(() {
@@ -62,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
     );
+
+    // Connect to WebSocket
     _socketService.connect();
   }
 
