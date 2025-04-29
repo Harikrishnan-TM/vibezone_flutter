@@ -25,6 +25,7 @@ class SocketService {
     _onRefreshUsers = onRefreshUsers;
   }
 
+  // Connect to the WebSocket server
   void connect() {
     if (_channel != null) return; // Prevent double connection
 
@@ -54,16 +55,48 @@ class SocketService {
     );
   }
 
+  // Disconnect from the WebSocket server
   void disconnect() {
     _channel?.sink.close();
     _channel = null;
   }
 
+  // Reconnect to the WebSocket server
   void reconnect() {
     print("Attempting to reconnect...");
     disconnect();
     connect();
   }
 
+  // Emit end call event
+  void emitEndCall(String user) {
+    if (_channel != null) {
+      final endCallData = json.encode({
+        'type': 'endCall',
+        'user': user,
+      });
+      _channel!.sink.add(endCallData); // Send the 'endCall' event to the server
+    }
+  }
+
+  // Listen for call ended events (e.g., when the other user ends the call)
+  void listenToCallEvents({required Function onCallEnded}) {
+    if (_channel != null) {
+      _channel!.stream.listen((event) {
+        final data = json.decode(event);
+        if (data['type'] == 'callEnded') {
+          onCallEnded();
+        }
+      });
+    }
+  }
+
+  // Remove listeners (cleanup)
+  void removeCallListeners() {
+    _channel?.sink.close();
+    _channel = null;
+  }
+
+  // Check if the WebSocket is connected
   bool get isConnected => _channel != null && _channel!.closeCode == null;
 }

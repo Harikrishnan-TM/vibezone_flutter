@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  permission_handler: ^10.0.0
 
   # Main packages
   http: ^0.13.5
