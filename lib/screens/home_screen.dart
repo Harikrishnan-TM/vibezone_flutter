@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _connectWebSocket();
   }
 
+  // 🔄 Load initial users via REST
   void _loadUsers() async {
     try {
       List<dynamic>? users = await ApiService.fetchOnlineUsers();
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // 🔌 Setup WebSocket and listeners
   void _connectWebSocket() {
     _socketService = SocketService(
       onIncomingCall: () {
@@ -55,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onRefreshUsers: (List<dynamic> newUsers) {
         if (mounted) {
           setState(() {
-            onlineUsers = newUsers..shuffle();
+            onlineUsers = newUsers..shuffle(); // Shuffle for randomness
           });
         }
       },
@@ -69,12 +71,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // 🔓 Handle logout
   void _handleLogout() async {
-    await AuthService.logout(); // Use static method directly
+    await AuthService.logout();
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
+  // 📞 Start call
   Future<void> _initiateCall(String username) async {
     try {
       final token = await AuthService.getToken();
@@ -90,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // ✅ Corrected here
+          'Authorization': 'Bearer $token', // ✅ Make sure token is prefixed correctly
         },
       );
 
@@ -101,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(
             builder: (context) => CallScreen(
               otherUser: username,
-              walletCoins: 100, // You can fetch dynamically later if needed
+              walletCoins: 100, // Replace with actual wallet data if needed
               isInitiator: true,
             ),
           ),
@@ -140,6 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                // Top Wallet & Profile Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -177,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
+                // Online Users List
                 Expanded(
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
@@ -230,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          // 📞 Incoming Call Overlay
           if (incomingCall)
             Container(
               color: Colors.black.withOpacity(0.8),

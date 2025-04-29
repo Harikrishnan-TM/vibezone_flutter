@@ -1,14 +1,51 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:http/http.dart' as http;
+import 'package:web_socket_channel/web_socket_channel.dart';
 import 'auth_service.dart'; // Your AuthService to get token
 
 class ApiService {
   static const String baseUrl = "https://vibezone-backend.fly.dev";
+  static const String wsUrl = "wss://vibezone-backend.fly.dev/ws/online-users/";
+  static WebSocketChannel? _channel;
+
+  // 🔌 Connect to WebSocket
+  static void connectToWebSocket({
+    required Function onIncomingCall,
+    required Function(List<dynamic>) onRefreshUsers,
+  }) {
+    try {
+      _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
+
+      _channel!.stream.listen((event) {
+        final data = json.decode(event);
+        debugPrint("📡 WS Message: $data");
+
+        if (data['type'] == 'call') {
+          onIncomingCall();
+        } else if (data['type'] == 'refresh') {
+          onRefreshUsers(data['payload']['users']);
+        }
+      }, onError: (error) {
+        debugPrint('❌ WebSocket error: $error');
+      }, onDone: () {
+        debugPrint('🛑 WebSocket closed.');
+      });
+    } catch (e) {
+      debugPrint('❌ Failed to connect to WebSocket: $e');
+    }
+  }
+
+  // ❌ Disconnect WebSocket
+  static void disconnectFromWebSocket() {
+    _channel?.sink.close();
+    _channel = null;
+    debugPrint('🔌 WebSocket disconnected');
+  }
 
   // 🔵 Fetch Profile Data
   static Future<Map<String, dynamic>?> fetchProfile() async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
 
     if (token == null) {
       debugPrint('❌ No auth token found.');
@@ -18,11 +55,7 @@ class ApiService {
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/api/profile/'),
-        headers: {
-          //'Authorization': 'Bearer $token',
-          'Authorization': 'Token $token',
-
-        },
+        headers: {'Authorization': 'Token $token'},
       );
 
       if (response.statusCode == 200) {
@@ -56,7 +89,7 @@ class ApiService {
 
   // 🟩 Accept Incoming Call
   static Future<Map<String, dynamic>?> acceptCall(String otherUser) async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -86,7 +119,7 @@ class ApiService {
 
   // 🟩 Deduct Coins During Call
   static Future<Map<String, dynamic>?> deductCoins() async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -96,7 +129,6 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/deduct-coins/'),
         headers: {
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
@@ -116,7 +148,7 @@ class ApiService {
 
   // 🟩 End Call
   static Future<Map<String, dynamic>?> endCall(String otherUser) async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -126,7 +158,6 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/end-call/'),
         headers: {
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
@@ -147,7 +178,7 @@ class ApiService {
 
   // 🟢 Buy Coins
   static Future<Map<String, dynamic>?> buyCoins(int amount) async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -157,7 +188,6 @@ class ApiService {
       final response = await http.post(
         Uri.parse('$baseUrl/api/buy-coins/'),
         headers: {
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
@@ -178,7 +208,7 @@ class ApiService {
 
   // 🟣 Check Incoming Call
   static Future<Map<String, dynamic>?> checkIncomingCall() async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -188,7 +218,6 @@ class ApiService {
       final response = await http.get(
         Uri.parse('$baseUrl/api/check-incoming-call/'),
         headers: {
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
         },
       );
@@ -207,7 +236,7 @@ class ApiService {
 
   // 🟡 Toggle Online Status
   static Future<Map<String, dynamic>?> toggleOnlineStatus(bool isOnline) async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -215,9 +244,8 @@ class ApiService {
 
     try {
       final response = await http.post(
-        Uri.parse('https://vibezone-backend.fly.dev/api/toggle-online/'),
+        Uri.parse('$baseUrl/api/toggle-online/'),
         headers: {
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
@@ -226,15 +254,10 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
-        if (responseBody != null && responseBody.containsKey('data')) {
-          return responseBody['data'];
-        } else {
-          debugPrint("⚠️ Response does not contain 'data'.");
-          return null;
-        }
+        return responseBody['data'];
       } else if (response.statusCode == 401) {
         debugPrint('⚠️ Unauthorized, token may have expired.');
-        await AuthService.logout(); // 🔥 FIXED
+        await AuthService.logout();
         return null;
       } else {
         debugPrint('⚠️ Error toggling online status: ${response.body}');
@@ -246,9 +269,9 @@ class ApiService {
     }
   }
 
-  // 🟣 Logout (Optional API call + local logout)
+  // 🟣 Logout (API + Local)
   static Future<void> logout() async {
-    final String? token = await AuthService.getToken(); // 🔥 FIXED
+    final String? token = await AuthService.getToken();
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return;
@@ -257,16 +280,12 @@ class ApiService {
     try {
       await http.post(
         Uri.parse('$baseUrl/api/logout/'),
-        headers: {
-            
-          'Authorization': 'Token $token',
-          //'Authorization': 'Bearer $token',
-        },
+        headers: {'Authorization': 'Token $token'},
       );
     } catch (e) {
       debugPrint('❌ Exception during API logout: $e');
     }
 
-    await AuthService.logout(); // 🔥 FIXED
+    await AuthService.logout(); // Local cleanup
   }
 }

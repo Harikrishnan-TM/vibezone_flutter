@@ -61,7 +61,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         }
       } catch (e) {
-        // Ignore errors silently for periodic checks
+        // Silently ignore periodic check errors
       }
     });
   }
@@ -70,7 +70,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _toggleOnlineStatus() async {
     try {
       final response = await ApiService.toggleOnlineStatus(!isOnline);
-
       if (mounted && response != null && response['data'] != null && response['data'].containsKey('is_online')) {
         setState(() {
           isOnline = response['data']['is_online'];
@@ -83,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
     }
-  } // <-- This closing brace was missing
+  }
 
   @override
   void dispose() {
@@ -126,7 +125,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _toggleOnlineStatus,
+                    onPressed: () async {
+                      await _toggleOnlineStatus();
+                      await _fetchProfileData(); // Refresh UI with updated status
+                    },
                     child: Text(isOnline ? 'Go Offline' : 'Go Online'),
                   ),
                   const SizedBox(height: 20),

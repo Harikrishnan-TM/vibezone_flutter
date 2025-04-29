@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // ✅ API Service import
+import 'package:permission_handler/permission_handler.dart'; // ✅ Added permission handler import
+import '../services/api_service.dart';
+import '../services/socket_service.dart'; // ✅ Added socket import
 
 class CallScreen extends StatefulWidget {
-  final String otherUser;   // Username of the user we are talking to
-  final int walletCoins;    // Current user's starting coins
-  final bool isInitiator;   // Whether I started the call
+  final String otherUser;
+  final int walletCoins;
+  final bool isInitiator;
 
   const CallScreen({
     Key? key,
@@ -23,20 +25,60 @@ class _CallScreenState extends State<CallScreen> {
   int _secondsElapsed = 0;
   bool _accepted = false;
   late int _currentCoins;
+  late SocketService _socketService;
 
   @override
   void initState() {
     super.initState();
     _currentCoins = widget.walletCoins;
 
-    if (!widget.isInitiator) {
-      _acceptIncomingCall(); // If not initiator, wait for call acceptance
+    _socketService = SocketService.getInstance(); // ✅ Assume singleton
+    _socketService.listenToCallEvents(
+      onCallEnded: _handleRemoteEndCall,
+    );
+
+    // Check for microphone and camera permissions before proceeding
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    // Request microphone and camera permissions
+    final micStatus = await Permission.microphone.request();
+    final cameraStatus = await Permission.camera.request();
+
+    if (micStatus.isGranted && cameraStatus.isGranted) {
+      if (!widget.isInitiator) {
+        _acceptIncomingCall();
+      } else {
+        _startTimer();
+      }
     } else {
-      _startTimer(); // If initiator, start call immediately
+      // Show a dialog to inform the user about permissions
+      _showPermissionDialog();
     }
   }
 
-  // Accept incoming call
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Permissions Required'),
+          content: const Text(
+              'To make or receive calls, we need access to your microphone and camera. Please grant the necessary permissions.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _acceptIncomingCall() async {
     try {
       final response = await ApiService.acceptCall(widget.otherUser);
@@ -55,7 +97,6 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  // Start call timer
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       setState(() {
@@ -68,7 +109,6 @@ class _CallScreenState extends State<CallScreen> {
     });
   }
 
-  // Deduct coins every minute
   Future<void> _deductCoins() async {
     try {
       final response = await ApiService.deductCoins();
@@ -88,11 +128,11 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  // End the call
   Future<void> _endCall() async {
     try {
       _timer?.cancel();
       await ApiService.endCall(widget.otherUser);
+      _socketService.emitEndCall(widget.otherUser); // ✅ Notify other user
     } catch (e) {
       debugPrint('⚠️ Error ending call: $e');
     } finally {
@@ -100,14 +140,23 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  // Close screen safely
+  void _handleRemoteEndCall() {
+    debugPrint('📞 Call ended by other user.');
+    if (mounted) {
+      _timer?.cancel();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Call ended by the other user.')),
+      );
+      _closeScreen();
+    }
+  }
+
   void _closeScreen() {
     if (mounted) {
       Navigator.pop(context);
     }
   }
 
-  // Format seconds into mm:ss
   String _formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final secs = seconds % 60;
@@ -117,6 +166,7 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _socketService.removeCallListeners(); // ✅ Clean up listeners
     super.dispose();
   }
 

@@ -4,9 +4,10 @@ import 'package:vibezone_flutter/services/auth_service.dart';
 import 'package:vibezone_flutter/screens/login_screen.dart';
 import 'package:vibezone_flutter/screens/signup_screen.dart';
 import 'package:vibezone_flutter/screens/home_screen.dart';
-import 'package:vibezone_flutter/screens/profile_screen.dart'; // ✅
-import 'package:vibezone_flutter/screens/call_screen.dart'; // ✅
-import 'package:vibezone_flutter/screens/buy_coins_screen.dart'; // ✅
+import 'package:vibezone_flutter/screens/profile_screen.dart';
+import 'package:vibezone_flutter/screens/call_screen.dart';
+import 'package:vibezone_flutter/screens/buy_coins_screen.dart';
+import 'package:vibezone_flutter/services/socket_service.dart'; // ✅ Added for socket singleton
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,8 +20,11 @@ Future<void> main() async {
     debugPrint("❌ Failed to load .env: $e");
   }
 
-  // Check login status using AuthService
-  final bool isLoggedIn = await AuthService.isLoggedIn(); // ✅ Static method call fixed
+  // Optionally connect WebSocket globally
+  SocketService.getInstance().connect(); // ✅ Optional global socket connection
+
+  // Check login status
+  final bool isLoggedIn = await AuthService.isLoggedIn();
 
   runApp(VibezoneApp(isLoggedIn: isLoggedIn));
 }
@@ -41,16 +45,24 @@ class VibezoneApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       initialRoute: isLoggedIn ? '/home' : '/login',
+      onGenerateRoute: (settings) {
+        if (settings.name == '/call') {
+          final args = settings.arguments as Map<String, dynamic>?;
+          return MaterialPageRoute(
+            builder: (context) => CallScreen(
+              otherUser: args?['otherUser'] ?? 'defaultUser',
+              walletCoins: args?['walletCoins'] ?? 100,
+              isInitiator: args?['isInitiator'] ?? true,
+            ),
+          );
+        }
+        return null; // fallback to routes map
+      },
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
-        '/call': (context) => CallScreen(
-          otherUser: 'defaultUser', // Pass the required 'otherUser'
-          walletCoins: 100, // Provide the walletCoins parameter
-          isInitiator: true, // Provide the 'isInitiator' parameter
-        ),
         '/buy-coins': (context) => const BuyCoinsScreen(),
       },
     );
