@@ -28,23 +28,42 @@ class _HomeScreenState extends State<HomeScreen> {
   // 🔄 Load initial users via REST
   void _loadUsers() async {
     try {
-      List<dynamic>? users = await ApiService.fetchOnlineUsers();
-      if (users != null && mounted) {
-        setState(() {
-          onlineUsers = users;
-        });
+      final token = await AuthService.getToken();
+      debugPrint("🔐 Token: $token");
+
+      final response = await http.get(
+        Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      debugPrint("🌐 Status: ${response.statusCode} - Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        final users = jsonDecode(response.body);
+        if (mounted) {
+          setState(() {
+            onlineUsers = users;
+          });
+        }
+      } else if (response.statusCode == 401) {
+        debugPrint('❌ Unauthorized - redirecting to login');
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+        }
+      } else {
+        debugPrint('⚠️ Failed to load users: ${response.body}');
       }
     } catch (e) {
-      debugPrint('Failed to load users: $e');
+      debugPrint('❌ Exception in _loadUsers: $e');
     }
   }
 
   // 🔌 Setup WebSocket and listeners
   void _connectWebSocket() {
-    // Get the SocketService singleton instance
     _socketService = SocketService.getInstance();
-    
-    // Register the callbacks
+
     _socketService.registerCallbacks(
       onIncomingCall: () {
         if (mounted) {
@@ -61,13 +80,12 @@ class _HomeScreenState extends State<HomeScreen> {
       onRefreshUsers: (List<dynamic> newUsers) {
         if (mounted) {
           setState(() {
-            onlineUsers = newUsers..shuffle(); // Shuffle for randomness
+            onlineUsers = newUsers..shuffle();
           });
         }
       },
     );
 
-    // Connect to WebSocket
     _socketService.connect();
   }
 
@@ -100,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // ✅ Make sure token is prefixed correctly
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -111,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(
             builder: (context) => CallScreen(
               otherUser: username,
-              walletCoins: 100, // Replace with actual wallet data if needed
+              walletCoins: 100,
               isInitiator: true,
             ),
           ),
@@ -190,54 +208,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 10),
                 // Online Users List
                 Expanded(
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: onlineUsers.length,
-                    itemBuilder: (context, index) {
-                      final user = onlineUsers[index];
-                      return Container(
-                        width: 100,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              spreadRadius: 2,
-                            ),
-                          ],
+                  child: onlineUsers.isEmpty
+                      ? const Center(child: Text("No online users or failed to load."))
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: onlineUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = onlineUsers[index];
+                            return Container(
+                              width: 100,
+                              margin: const EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurRadius: 4,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Icon(Icons.person, size: 40),
+                                  Text(
+                                    user['username'],
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => _initiateCall(user['username']),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    ),
+                                    child: const Text(
+                                      'Call',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Icon(Icons.person, size: 40),
-                            Text(
-                              user['username'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            ElevatedButton(
-                              onPressed: () => _initiateCall(user['username']),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              ),
-                              child: const Text(
-                                'Call',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
