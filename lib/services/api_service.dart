@@ -215,7 +215,7 @@ class ApiService {
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/api/toggle-online-status/'),
+        Uri.parse('https://vibezone-backend.fly.dev/api/toggle-online/'),
         headers: {
           //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
