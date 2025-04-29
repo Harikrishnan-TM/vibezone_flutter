@@ -25,7 +25,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _connectWebSocket();
   }
 
-  // 🔄 Load initial users via REST
   void _loadUsers() async {
     try {
       final token = await AuthService.getToken();
@@ -60,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // 🔌 Setup WebSocket and listeners
   void _connectWebSocket() {
     _socketService = SocketService.getInstance();
 
@@ -95,14 +93,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // 🔓 Handle logout
   void _handleLogout() async {
     await AuthService.logout();
     if (!mounted) return;
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
-  // 📞 Start call
   Future<void> _initiateCall(String username) async {
     try {
       final token = await AuthService.getToken();
@@ -168,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Top Wallet & Profile Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -206,10 +201,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                // Online Users List
                 Expanded(
                   child: onlineUsers.isEmpty
-                      ? const Center(child: Text("No online users or failed to load."))
+                      ? const Center(child: Text("No users online."))
                       : ListView.builder(
                           scrollDirection: Axis.horizontal,
                           itemCount: onlineUsers.length,
@@ -262,7 +256,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // 📞 Incoming Call Overlay
           if (incomingCall)
             Container(
               color: Colors.black.withOpacity(0.8),
