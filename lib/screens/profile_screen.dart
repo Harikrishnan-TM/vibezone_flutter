@@ -70,11 +70,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _toggleOnlineStatus() async {
     try {
       final response = await ApiService.toggleOnlineStatus(!isOnline);
-      if (mounted && response != null && response['success'] == true) {
+      
+      if (mounted && response != null && response.containsKey('is_online')) {
         setState(() {
-          isOnline = response['data']['is_online'];
+          isOnline = response['is_online'];
         });
       }
+
+
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
