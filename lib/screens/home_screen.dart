@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () {
-                            // Navigate to buy coins page
+                            Navigator.pushNamed(context, '/buy-coins');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
