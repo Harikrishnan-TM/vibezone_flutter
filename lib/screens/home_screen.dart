@@ -21,16 +21,26 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUsers();
-    // 🔧 Temporarily disabled to test WebSocket causing redirect
-    // _connectWebSocket();
+    _checkAndLoadUsers();
+     _connectWebSocket(); // Uncomment when socket is stable
   }
 
-  void _loadUsers() async {
-    try {
-      final token = await AuthService.getToken();
-      debugPrint("🔐 Token: $token");
+  // ✅ Ensures token is present before loading users
+  void _checkAndLoadUsers() async {
+    final token = await AuthService.getToken();
+    if (token != null && token.isNotEmpty) {
+      debugPrint("✅ Token is valid. Proceeding to load users.");
+      _loadUsers(token);
+    } else {
+      debugPrint("⛔ No valid token found. Skipping user load.");
+      // Optional: navigate to login screen
+      // Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    }
+  }
 
+  void _loadUsers(String token) async {
+    try {
+      debugPrint("📤 Sending token: Bearer ${token.substring(0, 10)}...");
       final response = await http.get(
         Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
         headers: {
@@ -44,13 +54,13 @@ class _HomeScreenState extends State<HomeScreen> {
         final users = jsonDecode(response.body);
         if (mounted) {
           setState(() {
-            onlineUsers = users;
+            onlineUsers = users['online_users'];
           });
         }
       } else if (response.statusCode == 401) {
         debugPrint('❌ Unauthorized - redirecting to login');
         if (mounted) {
-          Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+          // Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
         }
       } else {
         debugPrint('⚠️ Failed to load users: ${response.body}');
@@ -90,7 +100,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    // Still disconnect safely even if it wasn’t called (no harm)
     _socketService.disconnect();
     super.dispose();
   }

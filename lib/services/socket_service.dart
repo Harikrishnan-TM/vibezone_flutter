@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 typedef CallCallback = void Function();
 typedef RefreshCallback = void Function(List<dynamic>);
+typedef CallEndedCallback = void Function();
 
 class SocketService {
   static final SocketService _instance = SocketService._internal();
@@ -11,12 +12,14 @@ class SocketService {
   WebSocketChannel? _channel;
   CallCallback? _onIncomingCall;
   RefreshCallback? _onRefreshUsers;
+  CallEndedCallback? _onCallEnded;
+
+  bool _isListening = false;
 
   SocketService._internal();
 
   factory SocketService.getInstance() => _instance;
 
-  // Allow registration of callbacks (optional but useful for pages like HomeScreen)
   void registerCallbacks({
     required CallCallback onIncomingCall,
     required RefreshCallback onRefreshUsers,
@@ -25,78 +28,106 @@ class SocketService {
     _onRefreshUsers = onRefreshUsers;
   }
 
-  // Connect to the WebSocket server
   void connect() {
-    if (_channel != null) return; // Prevent double connection
+    if (_channel != null && _channel!.closeCode == null) {
+      print('[🔌] WebSocket already connected.');
+      return;
+    }
 
-    final wsUrl = dotenv.env['SOCKET_URL'] ?? 'ws://localhost:8000/ws/online-users/';
-    final uri = Uri.parse(wsUrl);
+    try {
+      final wsUrl = dotenv.env['SOCKET_URL'] ?? 'ws://localhost:8000/ws/online-users/';
+      final uri = Uri.parse(wsUrl);
 
-    _channel = WebSocketChannel.connect(uri);
+      print('[🌐] Connecting to WebSocket: $uri');
+      _channel = WebSocketChannel.connect(uri);
 
-    _channel!.stream.listen(
+      if (!_isListening) {
+        _listen();
+        _isListening = true;
+      }
+    } catch (e) {
+      print('[❌] Failed to connect to WebSocket: $e');
+    }
+  }
+
+  void _listen() {
+    _channel?.stream.listen(
       (event) {
-        final data = json.decode(event);
-        if (data['type'] == 'call') {
-          _onIncomingCall?.call();
-        } else if (data['type'] == 'refresh') {
-          List<dynamic> newUsers = data['payload']['users'];
-          _onRefreshUsers?.call(newUsers);
+        try {
+          final data = json.decode(event);
+
+          if (data['type'] == 'call') {
+            print('[📞] Incoming call event received.');
+            _onIncomingCall?.call();
+          } else if (data['type'] == 'refresh') {
+            print('[🔄] Refresh users event received.');
+            List<dynamic> newUsers = data['payload']['users'];
+            _onRefreshUsers?.call(newUsers);
+          } else if (data['type'] == 'callEnded') {
+            print('[📴] Call ended event received.');
+            _onCallEnded?.call();
+          } else {
+            print('[⚠️] Unknown WebSocket event: $data');
+          }
+        } catch (e) {
+          print('[❗] Error processing WebSocket message: $e');
         }
       },
       onError: (error) {
-        print('WebSocket error: $error');
+        print('[🧯] WebSocket error: $error');
         disconnect();
+        _scheduleReconnect();
       },
       onDone: () {
-        print('WebSocket closed.');
+        print('[📴] WebSocket closed with code ${_channel?.closeCode}.');
         disconnect();
+        _scheduleReconnect();
       },
     );
   }
 
-  // Disconnect from the WebSocket server
   void disconnect() {
-    _channel?.sink.close();
-    _channel = null;
+    if (_channel != null) {
+      print('[🔌] Disconnecting WebSocket.');
+      _channel?.sink.close();
+      _channel = null;
+      _isListening = false;
+    }
   }
 
-  // Reconnect to the WebSocket server
-  void reconnect() {
-    print("Attempting to reconnect...");
-    disconnect();
-    connect();
+  void _scheduleReconnect() {
+    // Wait a bit before reconnecting to avoid loops
+    Future.delayed(Duration(seconds: 5), () {
+      print('[🔁] Reconnecting to WebSocket...');
+      connect();
+    });
   }
 
-  // Emit end call event
   void emitEndCall(String user) {
     if (_channel != null) {
       final endCallData = json.encode({
         'type': 'endCall',
         'user': user,
       });
-      _channel!.sink.add(endCallData); // Send the 'endCall' event to the server
+
+      print('[📤] Sending endCall event for user: $user');
+      _channel!.sink.add(endCallData);
+    } else {
+      print('[⚠️] Tried to send endCall but WebSocket not connected.');
     }
   }
 
-  // Listen for call ended events (e.g., when the other user ends the call)
-  void listenToCallEvents({required Function onCallEnded}) {
-    if (_channel != null) {
-      _channel!.stream.listen((event) {
-        final data = json.decode(event);
-        if (data['type'] == 'callEnded') {
-          onCallEnded();
-        }
-      });
-    }
+  void listenToCallEvents({required CallEndedCallback onCallEnded}) {
+    _onCallEnded = onCallEnded;
   }
 
-  // Remove listeners (cleanup)
   void removeCallListeners() {
+    print('[🧹] Removing WebSocket listeners.');
+    _onCallEnded = null;
     _channel?.sink.close();
     _channel = null;
+    _isListening = false;
   }
 
-  // Check if the WebSocket is connected
   bool get isConnected => _channel != null && _channel!.closeCode == null;
 }
