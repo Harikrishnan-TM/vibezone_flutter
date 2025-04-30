@@ -44,7 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
       final response = await http.get(
         Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
         headers: {
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
         },
       );
 
@@ -125,7 +126,9 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          //'Authorization': 'Bearer $token',
+          'Authorization': 'Token $token',
+
         },
       );
 
