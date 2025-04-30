@@ -21,7 +21,7 @@ Future<void> main() async {
   }
 
   // Optionally connect WebSocket globally
- // SocketService.getInstance().connect(); // ✅ Optional global socket connection
+  SocketService.getInstance().connect(); // ✅ Optional global socket connection
 
   // Check login status
   final bool isLoggedIn = await AuthService.isLoggedIn();
