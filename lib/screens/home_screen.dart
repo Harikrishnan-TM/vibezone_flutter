@@ -4,6 +4,7 @@ import '../services/api_service.dart';
 import '../services/socket_service.dart';
 import '../services/auth_service.dart';
 import 'call_screen.dart';
+import 'home_content.dart';
 import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
@@ -22,34 +23,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _checkAndLoadUsers();
-     _connectWebSocket(); // Uncomment when socket is stable
+    _connectWebSocket();
   }
 
-  // ✅ Ensures token is present before loading users
   void _checkAndLoadUsers() async {
     final token = await AuthService.getToken();
     if (token != null && token.isNotEmpty) {
-      debugPrint("✅ Token is valid. Proceeding to load users.");
       _loadUsers(token);
-    } else {
-      debugPrint("⛔ No valid token found. Skipping user load.");
-      // Optional: navigate to login screen
-      // Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     }
   }
 
   void _loadUsers(String token) async {
     try {
-      debugPrint("📤 Sending token: Bearer ${token.substring(0, 10)}...");
       final response = await http.get(
         Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
-        headers: {
-          //'Authorization': 'Bearer $token',
-          'Authorization': 'Token $token',
-        },
+        headers: {'Authorization': 'Token $token'},
       );
-
-      debugPrint("🌐 Status: ${response.statusCode} - Body: ${response.body}");
 
       if (response.statusCode == 200) {
         final users = jsonDecode(response.body);
@@ -59,12 +48,9 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       } else if (response.statusCode == 401) {
-        debugPrint('❌ Unauthorized - redirecting to login');
         if (mounted) {
           // Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
         }
-      } else {
-        debugPrint('⚠️ Failed to load users: ${response.body}');
       }
     } catch (e) {
       debugPrint('❌ Exception in _loadUsers: $e');
@@ -126,9 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Uri.parse('https://vibezone-backend.fly.dev/api/call/$username/'),
         headers: {
           'Content-Type': 'application/json',
-          //'Authorization': 'Bearer $token',
           'Authorization': 'Token $token',
-
         },
       );
 
@@ -174,101 +158,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('👦'),
-                        const SizedBox(width: 8),
-                        const Text('🪙 100'),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/buy-coins');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                          ),
-                          child: const Text('Buy Coins'),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/profile');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                      ),
-                      child: const Text('My Profile'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  "Online Users 💬",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: onlineUsers.isEmpty
-                      ? const Center(child: Text("No users online."))
-                      : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: onlineUsers.length,
-                          itemBuilder: (context, index) {
-                            final user = onlineUsers[index];
-                            return Container(
-                              width: 100,
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Colors.black12,
-                                    blurRadius: 4,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
-                              ),
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Icon(Icons.person, size: 40),
-                                  Text(
-                                    user['username'],
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () => _initiateCall(user['username']),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green,
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                    ),
-                                    child: const Text(
-                                      'Call',
-                                      style: TextStyle(fontSize: 12),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
+          HomeContent(
+            onlineUsers: onlineUsers,
+            onUsersUpdated: (newUsers) {
+              setState(() {
+                onlineUsers = newUsers;
+              });
+            },
+            onCall: _initiateCall,
           ),
           if (incomingCall)
             Container(

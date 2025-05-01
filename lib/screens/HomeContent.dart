@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'home_content.dart'; // Import the new widget
 
 class HomeContent extends StatefulWidget {
   final List<dynamic> onlineUsers;
@@ -73,7 +72,7 @@ class _HomeContentState extends State<HomeContent> {
             const Text("Online Users 💬", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             SizedBox(
-              height: 160,  // Keep this fixed height
+              height: 160,
               child: widget.onlineUsers.isEmpty
                   ? const Center(child: Text("No users online."))
                   : ListView.builder(
@@ -81,36 +80,39 @@ class _HomeContentState extends State<HomeContent> {
                       itemCount: widget.onlineUsers.length,
                       itemBuilder: (context, index) {
                         final user = widget.onlineUsers[index];
-                        return Container(
+                        return SizedBox(
                           width: 100,
-                          margin: const EdgeInsets.symmetric(horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(color: Colors.black12, blurRadius: 4, spreadRadius: 2),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(8),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,  // Center the content
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.person, size: 40),
-                              Text(
-                                user['username'],
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                                overflow: TextOverflow.ellipsis,  // To avoid text overflow
-                              ),
-                              ElevatedButton(
-                                onPressed: () => widget.onCall(user['username']),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          height: 140, // Fix box height
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(color: Colors.black12, blurRadius: 4, spreadRadius: 2),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.person, size: 40),
+                                Text(
+                                  user['username'],
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                child: const Text('Call', style: TextStyle(fontSize: 12)),
-                              ),
-                            ],
+                                ElevatedButton(
+                                  onPressed: () => widget.onCall(user['username']),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  ),
+                                  child: const Text('Call', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
