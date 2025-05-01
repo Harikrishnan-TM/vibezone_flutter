@@ -59,7 +59,7 @@ class SocketService {
           if (data['type'] == 'call') {
             print('[📞] Incoming call event received.');
             _onIncomingCall?.call();
-          } else if (data['type'] == 'refresh') {
+          } else if (data['type'] == 'refresh_users') {
             print('[🔄] Refresh users event received.');
             List<dynamic> newUsers = data['payload']['users'];
             _onRefreshUsers?.call(newUsers);
