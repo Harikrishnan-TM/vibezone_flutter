@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'withdraw_status_screen.dart'; // Ensure this import is correct
+import 'withdraw_status_screen.dart'; // Ensure this path is correct
 
 class WinMoneyPage extends StatelessWidget {
   final int walletCoins;
@@ -13,7 +13,7 @@ class WinMoneyPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double rupeeAmount = walletCoins.toDouble(); // 1 coin = ₹1
+    final double rupeeAmount = walletCoins.toDouble(); // Assuming 1 coin = ₹1
 
     return Scaffold(
       appBar: AppBar(
@@ -35,10 +35,11 @@ class WinMoneyPage extends StatelessWidget {
             Text(
               '($walletCoins coins in your wallet)',
               style: const TextStyle(fontSize: 18, color: Colors.grey),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
 
-            // KYC STATUS
+            // KYC Status + Button
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

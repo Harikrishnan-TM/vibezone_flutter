@@ -71,8 +71,13 @@ class VibezoneApp extends StatelessWidget {
         '/withdraw-status': (context) => const WithdrawStatusScreen(),
         '/win-money': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-          return WinMoneyPage(walletCoins: args['walletCoins']);
-        },
+          return WinMoneyPage(
+            walletCoins: args['walletCoins'],
+            isKycCompleted: args['isKycCompleted'],
+        );
+
+       },
+       
       },
 
     );

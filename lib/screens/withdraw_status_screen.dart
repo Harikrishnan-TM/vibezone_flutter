@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class WithdrawStatusScreen extends StatelessWidget {
-  final double amount; // Pass this from previous screen if needed
+  final double amount; // Passed from previous screen
   final String status; // Example: 'Pending' or 'Transferred'
 
   const WithdrawStatusScreen({
@@ -23,14 +23,20 @@ class WithdrawStatusScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 40),
+
+            // Wallet icon
             const Icon(Icons.account_balance_wallet, size: 80, color: Colors.green),
             const SizedBox(height: 20),
+
+            // Amount Text
             Text(
               '₹${amount.toStringAsFixed(2)} will be transferred to your bank account.',
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
+
+            // Status Row
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -39,16 +45,19 @@ class WithdrawStatusScreen extends StatelessWidget {
                   status,
                   style: TextStyle(
                     fontSize: 18,
-                    color: status == 'Transferred' ? Colors.green : Colors.orange,
+                    color: status.toLowerCase() == 'transferred' ? Colors.green : Colors.orange,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 50),
+
+            const Spacer(),
+
+            // Done Button
             ElevatedButton(
               onPressed: () {
-                Navigator.pop(context); // Go back to WinMoneyPage
+                Navigator.pop(context); // Go back to previous screen
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
@@ -56,6 +65,7 @@ class WithdrawStatusScreen extends StatelessWidget {
               ),
               child: const Text('Done'),
             ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
