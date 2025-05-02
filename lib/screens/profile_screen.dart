@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           walletCoins = profile['data']['coins'] ?? 0;
           isGirl = profile['data']['is_girl'] ?? false;
           isOnline = profile['data']['is_online'] ?? false;
-          kycStatus = profile['data']['kyc_status'] ?? 'pending';
+          kycStatus = (profile['data']['kyc_status'] ?? 'pending').toString().toLowerCase();
         });
       }
     } catch (e) {
@@ -90,6 +90,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isKycCompleted = kycStatus == 'completed';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
@@ -118,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'KYC Status: ${kycStatus[0].toUpperCase()}${kycStatus.substring(1)}', // Capitalize first letter
+                    'KYC Status: ${kycStatus[0].toUpperCase()}${kycStatus.substring(1)}',
                     style: const TextStyle(fontSize: 16, color: Colors.blueGrey),
                   ),
                   const SizedBox(height: 10),
@@ -129,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         MaterialPageRoute(
                           builder: (_) => WinMoneyPage(
                             walletCoins: walletCoins,
-                            isKycCompleted: kycStatus.toLowerCase() == 'completed',
+                            isKycCompleted: isKycCompleted,
                           ),
                         ),
                       );

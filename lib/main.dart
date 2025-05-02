@@ -9,6 +9,8 @@ import 'package:vibezone_flutter/screens/call_screen.dart';
 import 'package:vibezone_flutter/screens/buy_coins_screen.dart';
 import 'package:vibezone_flutter/services/socket_service.dart'; // ✅ Added for socket singleton
 import 'package:vibezone_flutter/screens/win_money_page.dart';
+import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
+
 
 
 Future<void> main() async {
@@ -70,7 +72,9 @@ class VibezoneApp extends StatelessWidget {
         '/win-money': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return WinMoneyPage(walletCoins: args['walletCoins']);
+        },
       },
+
     );
   }
 }
