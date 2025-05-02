@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../services/auth_service.dart'; // Import AuthService
+import '../services/auth_service.dart';
+import 'win_money_page.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int walletCoins = 0;
   bool isGirl = false;
   bool isOnline = false;
+  String kycStatus = 'pending'; // 🟡 From backend profile API
   bool incomingCallOverlayVisible = false;
   Timer? _callCheckTimer;
 
@@ -25,7 +27,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _startIncomingCallChecker();
   }
 
-  // Fetch the user's profile data
   Future<void> _fetchProfileData() async {
     try {
       final profile = await ApiService.fetchProfile();
@@ -35,18 +36,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           walletCoins = profile['data']['coins'] ?? 0;
           isGirl = profile['data']['is_girl'] ?? false;
           isOnline = profile['data']['is_online'] ?? false;
+          kycStatus = profile['data']['kyc_status'] ?? 'pending';
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch profile')),
+          const SnackBar(content: Text('Failed to fetch profile')),
         );
       }
     }
   }
 
-  // Periodically check for incoming calls
   void _startIncomingCallChecker() {
     _callCheckTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
       try {
@@ -60,13 +61,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pushNamed(context, '/call');
           }
         }
-      } catch (e) {
-        // Silently ignore periodic check errors
-      }
+      } catch (_) {}
     });
   }
 
-  // Toggle online status of the user
   Future<void> _toggleOnlineStatus() async {
     try {
       final response = await ApiService.toggleOnlineStatus(!isOnline);
@@ -75,10 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           isOnline = response['data']['is_online'];
         });
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to toggle status')),
+          const SnackBar(content: Text('Failed to toggle status')),
         );
       }
     }
@@ -111,14 +109,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'Your wallet balance: $walletCoins coins',
-                  style: const TextStyle(fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 30),
 
                 if (isGirl) ...[
+                  Text(
+                    'Your wallet balance: $walletCoins coins',
+                    style: const TextStyle(fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'KYC Status: ${kycStatus[0].toUpperCase()}${kycStatus.substring(1)}', // Capitalize first letter
+                    style: const TextStyle(fontSize: 16, color: Colors.blueGrey),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WinMoneyPage(
+                            walletCoins: walletCoins,
+                            isKycCompleted: kycStatus.toLowerCase() == 'completed',
+                          ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                    child: const Text('Win Money 💰'),
+                  ),
+                  const SizedBox(height: 30),
                   Text(
                     'Status: ${isOnline ? 'Online' : 'Offline'}',
                     style: const TextStyle(fontSize: 18),
@@ -127,14 +146,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       await _toggleOnlineStatus();
-                      await _fetchProfileData(); // Refresh UI with updated status
+                      await _fetchProfileData(); // Refresh UI
                     },
                     child: Text(isOnline ? 'Go Offline' : 'Go Online'),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
                 ],
 
-                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -173,10 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Center(
                   child: Text(
                     '📞 Incoming Call...',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(fontSize: 24, color: Colors.white),
                     textAlign: TextAlign.center,
                   ),
                 ),

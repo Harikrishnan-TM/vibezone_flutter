@@ -1,18 +1,22 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class HomeContent extends StatefulWidget {
   final List<dynamic> onlineUsers;
   final Function(List<dynamic>) onUsersUpdated;
   final Function(String) onCall;
+  final int walletCoins;
+  final VoidCallback onRefreshWallet; // ✅ New callback to refresh wallet
 
   const HomeContent({
     Key? key,
     required this.onlineUsers,
     required this.onUsersUpdated,
     required this.onCall,
+    required this.walletCoins,
+    required this.onRefreshWallet, // ✅ required
   }) : super(key: key);
 
   @override
@@ -34,6 +38,12 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
+  // Called when navigating to Buy Coins screen and returning
+  Future<void> _navigateAndRefreshCoins() async {
+    await Navigator.pushNamed(context, '/buy-coins');
+    widget.onRefreshWallet(); // ✅ Call wallet refresh after returning
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
@@ -52,10 +62,11 @@ class _HomeContentState extends State<HomeContent> {
                   children: [
                     const Text('👦'),
                     const SizedBox(width: 8),
-                    const Text('🪙 100'),
+                    // Display wallet coins dynamically
+                    Text('🪙 ${widget.walletCoins}'),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: () => Navigator.pushNamed(context, '/buy-coins'),
+                      onPressed: _navigateAndRefreshCoins, // ✅ Updated handler
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                       child: const Text('Buy Coins'),
                     ),
@@ -82,7 +93,7 @@ class _HomeContentState extends State<HomeContent> {
                         final user = widget.onlineUsers[index];
                         return SizedBox(
                           width: 100,
-                          height: 140, // Fix box height
+                          height: 140,
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 8),
                             decoration: BoxDecoration(

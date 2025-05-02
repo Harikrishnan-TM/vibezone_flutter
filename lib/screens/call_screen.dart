@@ -103,6 +103,7 @@ class _CallScreenState extends State<CallScreen> {
         _secondsElapsed++;
       });
 
+      // Every 60 seconds (1 minute), deduct a coin
       if (_secondsElapsed % 60 == 0) {
         await _deductCoins();
       }

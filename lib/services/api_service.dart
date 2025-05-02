@@ -4,6 +4,14 @@ import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'auth_service.dart'; // Your AuthService to get token
 
+import 'dart:io';
+
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart'; // For detecting MIME type
+import 'package:path/path.dart'; // For extracting file name from path
+
+
+
 class ApiService {
   static const String baseUrl = "https://vibezone-backend.fly.dev";
   static const String wsUrl = "wss://vibezone-backend.fly.dev/ws/online-users/";
@@ -288,4 +296,67 @@ class ApiService {
 
     await AuthService.logout(); // Local cleanup
   }
+
+// 🔵 Upload KYC
+static Future<Map<String, dynamic>> uploadKyc({
+  required String realName,
+  required String bankName,
+  required String accountNumber,
+  required String ifscCode,
+  required File panCardFile,
+}) async {
+  try {
+    final String? token = await AuthService.getToken();
+
+    if (token == null) {
+      return {'success': false, 'message': 'User not authenticated'};
+    }
+
+    final uri = Uri.parse('$baseUrl/upload-kyc/');
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers['Authorization'] = 'Bearer $token';
+    request.headers['Accept'] = 'application/json';
+
+    request.fields['name'] = realName;
+    request.fields['bank_name'] = bankName;
+    request.fields['account_number'] = accountNumber;
+    request.fields['ifsc_code'] = ifscCode;
+
+    final mimeType = lookupMimeType(panCardFile.path) ?? 'application/octet-stream';
+    final mediaType = MediaType.parse(mimeType);
+
+    final panCardImage = await http.MultipartFile.fromPath(
+      'pan_card_image',
+      panCardFile.path,
+      contentType: mediaType,
+    );
+    request.files.add(panCardImage);
+
+    final response = await request.send();
+    final responseData = await response.stream.bytesToString();
+
+    if (response.statusCode == 201) {
+      return {'success': true, 'message': 'KYC submitted successfully'};
+    } else {
+      return {
+        'success': false,
+        'message': 'Failed to submit KYC',
+        'errors': jsonDecode(responseData),
+      };
+    }
+  } catch (e) {
+    return {'success': false, 'message': 'An error occurred: $e'};
+  }
 }
+
+  
+}
+
+
+
+
+
+
+
+

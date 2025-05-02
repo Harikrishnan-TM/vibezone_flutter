@@ -14,16 +14,33 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<dynamic> onlineUsers = [];
   bool incomingCall = false;
+  int homePageCoins = 0; // Update to use homePageCoins (for calls)
   late SocketService _socketService;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkAndLoadUsers();
+    _loadHomePageCoins();
     _connectWebSocket();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _socketService.disconnect();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadHomePageCoins(); // Refresh home page coins when returning from Buy Coins
+    }
   }
 
   void _checkAndLoadUsers() async {
@@ -47,13 +64,23 @@ class _HomeScreenState extends State<HomeScreen> {
             onlineUsers = users['online_users'];
           });
         }
-      } else if (response.statusCode == 401) {
-        if (mounted) {
-          // Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-        }
       }
     } catch (e) {
       debugPrint('❌ Exception in _loadUsers: $e');
+    }
+  }
+
+  // Update: Load home page coins (not wallet coins)
+  void _loadHomePageCoins() async {
+    try {
+      final profile = await ApiService.fetchProfile();
+      if (mounted && profile != null) {
+        setState(() {
+          homePageCoins = profile['home_page_coins'] ?? 0;  // Use home_page_coins field instead
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading home page coins: $e');
     }
   }
 
@@ -83,12 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     _socketService.connect();
-  }
-
-  @override
-  void dispose() {
-    _socketService.disconnect();
-    super.dispose();
   }
 
   void _handleLogout() async {
@@ -123,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
           MaterialPageRoute(
             builder: (context) => CallScreen(
               otherUser: username,
-              walletCoins: 100,
+              walletCoins: homePageCoins, // Use homePageCoins for call
               isInitiator: true,
             ),
           ),
@@ -160,12 +181,14 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           HomeContent(
             onlineUsers: onlineUsers,
+            walletCoins: homePageCoins, // Pass homePageCoins to HomeContent
             onUsersUpdated: (newUsers) {
               setState(() {
                 onlineUsers = newUsers;
               });
             },
             onCall: _initiateCall,
+            onRefreshWallet: _loadHomePageCoins,  // Ensure it refreshes coins
           ),
           if (incomingCall)
             Container(

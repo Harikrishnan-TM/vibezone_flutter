@@ -20,6 +20,7 @@ dependencies:
   flutter_dotenv: ^5.0.2
   shared_preferences: ^2.2.2 # ✅ Added required dependency
   flutter_secure_storage: ^9.0.0
+  image_picker: ^0.8.4+2
 
 dev_dependencies:
   flutter_test:
