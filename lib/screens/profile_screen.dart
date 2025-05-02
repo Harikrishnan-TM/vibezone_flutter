@@ -129,10 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => WinMoneyPage(
-                            walletCoins: walletCoins,
-                            isKycCompleted: isKycCompleted,
-                          ),
+                          builder: (_) => WinMoneyPage(walletCoins: walletCoins),
                         ),
                       );
                     },
