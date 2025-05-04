@@ -64,8 +64,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
         setState(() {
           earningCoins = walletData['data']?['earnings_coins'] ?? 0;
           isKycCompleted =
-              (kycData['kyc_status'] ?? '').toString().toLowerCase() ==
-                  'approved';
+              (kycData['kyc_status'] ?? '').toString().toLowerCase() == 'approved';
           isLoading = false;
         });
       } else {
@@ -148,8 +147,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                   const SizedBox(height: 40),
                   Text(
                     'You have ₹${rupeeAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
@@ -169,11 +167,9 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                       const SizedBox(width: 10),
                       if (!isKycCompleted)
                         ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/kyc'),
+                          onPressed: () => Navigator.pushNamed(context, '/kyc'),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             textStyle: const TextStyle(fontSize: 14),
                           ),
                           child: const Text('Verify KYC'),
@@ -191,8 +187,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 50, vertical: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
                       textStyle: const TextStyle(fontSize: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
