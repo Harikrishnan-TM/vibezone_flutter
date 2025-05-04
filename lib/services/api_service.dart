@@ -6,7 +6,6 @@ import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
-import 'package:path/path.dart';
 
 import 'auth_service.dart'; // Your AuthService to get token
 
@@ -300,25 +299,6 @@ class ApiService {
     await AuthService.logout(); // Local cleanup
   }
 
-  import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
-import '../auth/auth_service.dart'; // ✅ Ensure correct path to AuthService
-import '../constants.dart'; // ✅ Ensure baseUrl is defined here or imported correctly
-
-
-import 'dart:convert';
-import 'dart:io';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
-import '../auth/auth_service.dart'; // Make sure this is the correct path to AuthService
-
-const String baseUrl = 'https://vibezone-backend.fly.dev'; // Ensure it's defined here or passed appropriately
-
-
   // 🔵 Upload KYC
   static Future<Map<String, dynamic>> uploadKyc({
     required String realName,
@@ -376,9 +356,6 @@ const String baseUrl = 'https://vibezone-backend.fly.dev'; // Ensure it's define
       return {'success': false, 'message': 'An error occurred: $e'};
     }
   }
-
-
-
 
   // ✅ Set User in_call_with Status
   static Future<void> setUserInCallWith(String username) async {
