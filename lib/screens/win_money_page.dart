@@ -6,9 +6,14 @@ import '../services/auth_service.dart';
 import 'withdraw_status_screen.dart';
 
 class WinMoneyPage extends StatefulWidget {
-  final int? walletCoins; // Renamed for consistency
+  final int? walletCoins;
+  final bool? isKycCompleted;
 
-  const WinMoneyPage({Key? key, this.walletCoins}) : super(key: key);
+  const WinMoneyPage({
+    Key? key,
+    this.walletCoins,
+    this.isKycCompleted,
+  }) : super(key: key);
 
   @override
   State<WinMoneyPage> createState() => _WinMoneyPageState();
@@ -26,6 +31,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   void initState() {
     super.initState();
     earningCoins = widget.walletCoins ?? 0;
+    isKycCompleted = widget.isKycCompleted ?? false;
     _loadTokenAndFetchData();
   }
 
@@ -57,10 +63,9 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
 
         setState(() {
           earningCoins = walletData['data']?['earnings_coins'] ?? 0;
-          isKycCompleted = (kycData['kyc_status'] ?? '')
-                  .toString()
-                  .toLowerCase() ==
-              'approved';
+          isKycCompleted =
+              (kycData['kyc_status'] ?? '').toString().toLowerCase() ==
+                  'approved';
           isLoading = false;
         });
       } else {
@@ -150,8 +155,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                   const SizedBox(height: 10),
                   Text(
                     '($earningCoins withdrawable coins)',
-                    style:
-                        const TextStyle(fontSize: 18, color: Colors.grey),
+                    style: const TextStyle(fontSize: 18, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
