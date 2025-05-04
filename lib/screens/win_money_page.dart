@@ -6,11 +6,11 @@ import '../services/auth_service.dart';
 import 'withdraw_status_screen.dart';
 
 class WinMoneyPage extends StatefulWidget {
-  final int initialEarningCoins; // Changed to non-nullable integer
+  final int initialEarningCoins;
 
   const WinMoneyPage({
     Key? key,
-    required this.initialEarningCoins, // Added the required parameter here
+    required this.initialEarningCoins,
   }) : super(key: key);
 
   @override
@@ -28,48 +28,40 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   @override
   void initState() {
     super.initState();
-    earningCoins = widget.initialEarningCoins; // Accessing the passed initialEarningCoins
-    _loadTokenAndFetchData();
+    earningCoins = widget.initialEarningCoins;
+    _loadTokenAndCheckKyc();
   }
 
-  Future<void> _loadTokenAndFetchData() async {
+  Future<void> _loadTokenAndCheckKyc() async {
     authToken = await AuthService.getToken();
     if (authToken == null) {
       _showSnackBar('User not logged in. Please login again.');
       setState(() => isLoading = false);
       return;
     }
-    await fetchWalletAndKycStatus();
+    await _fetchKycStatus();
   }
 
-  Future<void> fetchWalletAndKycStatus() async {
+  Future<void> _fetchKycStatus() async {
     try {
-      final walletRes = await http.get(
-        Uri.parse('$baseUrl/get-earnings-wallet/'),
-        headers: {'Authorization': 'Token $authToken'},
-      );
-
-      final kycRes = await http.get(
+      final res = await http.get(
         Uri.parse('$baseUrl/get-kyc-status/'),
         headers: {'Authorization': 'Token $authToken'},
       );
 
-      if (walletRes.statusCode == 200 && kycRes.statusCode == 200) {
-        final walletData = jsonDecode(walletRes.body);
-        final kycData = jsonDecode(kycRes.body);
-
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
         setState(() {
-          earningCoins = walletData['data']?['earnings_coins'] ?? 0;
           isKycCompleted =
-              (kycData['kyc_status'] ?? '').toString().toLowerCase() == 'approved';
+              (data['kyc_status'] ?? '').toString().toLowerCase() == 'approved';
           isLoading = false;
         });
       } else {
-        _showSnackBar('Failed to fetch wallet or KYC data.');
+        _showSnackBar('Failed to fetch KYC status.');
         setState(() => isLoading = false);
       }
     } catch (e) {
-      _showSnackBar('Something went wrong while fetching data.');
+      _showSnackBar('Something went wrong while fetching KYC status.');
       setState(() => isLoading = false);
     }
   }
