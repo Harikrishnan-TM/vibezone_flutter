@@ -29,7 +29,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   Future<void> _loadTokenAndFetchData() async {
     authToken = await AuthService.getToken();
     if (authToken == null) {
-      showError('User not logged in. Please login again.');
+      _showSnackBar('User not logged in. Please login again.');
       setState(() => isLoading = false);
       return;
     }
@@ -40,12 +40,12 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
     try {
       final walletRes = await http.get(
         Uri.parse('$baseUrl/get-earnings-wallet/'),
-        headers: {'Authorization': 'Bearer $authToken'},
+        headers: {'Authorization': 'Token $authToken'},
       );
 
       final kycRes = await http.get(
         Uri.parse('$baseUrl/get-kyc-status/'),
-        headers: {'Authorization': 'Bearer $authToken'},
+        headers: {'Authorization': 'Token $authToken'},
       );
 
       if (walletRes.statusCode == 200 && kycRes.statusCode == 200) {
@@ -53,23 +53,29 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
         final kycData = jsonDecode(kycRes.body);
 
         setState(() {
-          walletCoins = walletData['data']['earnings_coins'] ?? 0;
-          isKycCompleted = (kycData['kyc_status'] ?? '').toLowerCase() == 'approved';
+          walletCoins = walletData['data']?['earnings_coins'] ?? 0;
+          isKycCompleted =
+              (kycData['kyc_status'] ?? '').toString().toLowerCase() == 'approved';
           isLoading = false;
         });
       } else {
-        showError('Failed to fetch wallet or KYC data.');
+        _showSnackBar('Failed to fetch wallet or KYC data.');
         setState(() => isLoading = false);
       }
     } catch (e) {
-      showError('Something went wrong while fetching data.');
+      _showSnackBar('Something went wrong while fetching data.');
       setState(() => isLoading = false);
     }
   }
 
-  Future<void> _requestWithdrawal(BuildContext context) async {
+  Future<void> _requestWithdrawal() async {
     if (authToken == null) {
-      showError('User not authenticated.');
+      _showSnackBar('User not authenticated.');
+      return;
+    }
+
+    if (walletCoins == 0) {
+      _showSnackBar('You have no coins to withdraw.');
       return;
     }
 
@@ -80,16 +86,14 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $authToken',
+          'Authorization': 'Token $authToken',
         },
         body: jsonEncode({'coins': walletCoins}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Withdrawal requested.')),
-        );
+        _showSnackBar(data['message'] ?? 'Withdrawal requested.');
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -101,14 +105,15 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
         );
       } else {
         final error = jsonDecode(response.body);
-        showError(error['error'] ?? 'Withdrawal failed.');
+        _showSnackBar(error['error'] ?? 'Withdrawal failed.');
       }
     } catch (e) {
-      showError('Something went wrong. Please try again.');
+      _showSnackBar('Something went wrong. Please try again.');
     }
   }
 
-  void showError(String message) {
+  void _showSnackBar(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
@@ -154,9 +159,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                       const SizedBox(width: 10),
                       if (!isKycCompleted)
                         ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/kyc');
-                          },
+                          onPressed: () => Navigator.pushNamed(context, '/kyc'),
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             textStyle: const TextStyle(fontSize: 14),
@@ -171,7 +174,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                   ElevatedButton(
                     onPressed: () {
                       if (isKycCompleted) {
-                        _requestWithdrawal(context);
+                        _requestWithdrawal();
                       } else {
                         Navigator.pushNamed(context, '/kyc');
                       }
