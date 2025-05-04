@@ -7,13 +7,10 @@ import 'package:vibezone_flutter/screens/home_screen.dart';
 import 'package:vibezone_flutter/screens/profile_screen.dart';
 import 'package:vibezone_flutter/screens/call_screen.dart';
 import 'package:vibezone_flutter/screens/buy_coins_screen.dart';
-import 'package:vibezone_flutter/services/socket_service.dart'; // ✅ Added for socket singleton
+import 'package:vibezone_flutter/services/socket_service.dart';
 import 'package:vibezone_flutter/screens/win_money_page.dart';
 import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
 import 'package:vibezone_flutter/main_container.dart';
-
-
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +24,7 @@ Future<void> main() async {
   }
 
   // Optionally connect WebSocket globally
-  SocketService.getInstance().connect(); // ✅ Optional global socket connection
+  SocketService.getInstance().connect();
 
   // Check login status
   final bool isLoggedIn = await AuthService.isLoggedIn();
@@ -62,27 +59,22 @@ class VibezoneApp extends StatelessWidget {
             ),
           );
         }
-        return null; // fallback to routes map
+        return null;
       },
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const MainContainer(),
-        //'/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/buy-coins': (context) => const BuyCoinsScreen(),
         '/withdraw-status': (context) => const WithdrawStatusScreen(),
         '/win-money': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return WinMoneyPage(
-            walletCoins: args['walletCoins'],
-            isKycCompleted: args['isKycCompleted'],
-        );
-
-       },
-       
+            initialEarningCoins: args['initialEarningCoins'] ?? 0,
+          );
+        },
       },
-
     );
   }
 }
