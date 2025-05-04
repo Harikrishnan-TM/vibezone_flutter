@@ -4,6 +4,8 @@ import 'screens/buy_coins_screen.dart';
 import 'screens/recents_page.dart'; // ← make sure this exists
 import 'screens/more_page.dart';     // ← we will create this
 
+
+
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
 

@@ -26,31 +26,32 @@ class _CallScreenState extends State<CallScreen> {
   bool _accepted = false;
   late int _currentCoins;
   late SocketService _socketService;
-  late String _currentUser;
+  String? _currentUser; // Changed to nullable
 
   @override
   void initState() {
     super.initState();
     _currentCoins = widget.walletCoins;
-
     _socketService = SocketService.getInstance();
     _socketService.listenToCallEvents(onCallEnded: _handleRemoteEndCall);
-
     _initialize();
   }
 
   Future<void> _initialize() async {
     _currentUser = await ApiService.getCurrentUsername();
 
-    // Notify server about the ongoing call
+    if (_currentUser == null) {
+      debugPrint('Could not retrieve current username.');
+      _showErrorAndExit();
+      return;
+    }
+
     _socketService.emitSetInCall(
-      username: _currentUser,
+      username: _currentUser!,
       inCallWith: widget.otherUser,
     );
 
-    // Update backend about call initiation
     await _setUserInCallStatus(widget.otherUser);
-
     await _checkPermissions();
   }
 
@@ -150,12 +151,13 @@ class _CallScreenState extends State<CallScreen> {
       await ApiService.endCall(widget.otherUser);
       _socketService.emitEndCall(widget.otherUser);
 
-      // Clear in-call status
-      _socketService.emitSetInCall(
-        username: _currentUser,
-        inCallWith: '',
-      );
-      await _setUserInCallStatus('');
+      if (_currentUser != null) {
+        _socketService.emitSetInCall(
+          username: _currentUser!,
+          inCallWith: '',
+        );
+        await _setUserInCallStatus('');
+      }
     } catch (e) {
       debugPrint('Error ending call: $e');
     } finally {
@@ -178,6 +180,22 @@ class _CallScreenState extends State<CallScreen> {
     if (mounted) {
       Navigator.pop(context);
     }
+  }
+
+  void _showErrorAndExit() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Error'),
+        content: const Text('Could not determine user identity. Please try again later.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    ).then((_) => _closeScreen());
   }
 
   String _formatDuration(int seconds) {

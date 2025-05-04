@@ -6,7 +6,9 @@ import '../services/auth_service.dart';
 import 'withdraw_status_screen.dart';
 
 class WinMoneyPage extends StatefulWidget {
-  const WinMoneyPage({Key? key}) : super(key: key);
+  final int? initialWalletCoins; // Optional: if passed from other screen
+
+  const WinMoneyPage({Key? key, this.initialWalletCoins}) : super(key: key);
 
   @override
   State<WinMoneyPage> createState() => _WinMoneyPageState();
@@ -23,6 +25,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   @override
   void initState() {
     super.initState();
+    walletCoins = widget.initialWalletCoins ?? 0;
     _loadTokenAndFetchData();
   }
 
@@ -148,7 +151,6 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -168,9 +170,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                         ),
                     ],
                   ),
-
                   const Spacer(),
-
                   ElevatedButton(
                     onPressed: () {
                       if (isKycCompleted) {
