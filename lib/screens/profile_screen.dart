@@ -166,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => WinMoneyPage(
-                            initialEarningCoins: earningCoins,
+                            initialEarningCoins: earningCoins, // Pass the earningCoins here
                           ),
                         ),
                       );

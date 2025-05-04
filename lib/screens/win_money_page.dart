@@ -6,13 +6,11 @@ import '../services/auth_service.dart';
 import 'withdraw_status_screen.dart';
 
 class WinMoneyPage extends StatefulWidget {
-  final int? walletCoins;
-  final bool? isKycCompleted;
+  final int initialEarningCoins; // Changed to non-nullable integer
 
   const WinMoneyPage({
     Key? key,
-    this.walletCoins,
-    this.isKycCompleted,
+    required this.initialEarningCoins, // Added the required parameter here
   }) : super(key: key);
 
   @override
@@ -30,8 +28,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   @override
   void initState() {
     super.initState();
-    earningCoins = widget.walletCoins ?? 0;
-    isKycCompleted = widget.isKycCompleted ?? false;
+    earningCoins = widget.initialEarningCoins; // Accessing the passed initialEarningCoins
     _loadTokenAndFetchData();
   }
 
