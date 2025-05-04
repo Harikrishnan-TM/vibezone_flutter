@@ -56,18 +56,25 @@ class SocketService {
         try {
           final data = json.decode(event);
 
-          if (data['type'] == 'call') {
-            print('[📞] Incoming call event received.');
-            _onIncomingCall?.call();
-          } else if (data['type'] == 'refresh_users') {
-            print('[🔄] Refresh users event received.');
-            List<dynamic> newUsers = data['payload']['users'];
-            _onRefreshUsers?.call(newUsers);
-          } else if (data['type'] == 'callEnded') {
-            print('[📴] Call ended event received.');
-            _onCallEnded?.call();
-          } else {
-            print('[⚠️] Unknown WebSocket event: $data');
+          switch (data['type']) {
+            case 'call':
+              print('[📞] Incoming call event received.');
+              _onIncomingCall?.call();
+              break;
+
+            case 'refresh_users':
+              print('[🔄] Refresh users event received.');
+              List<dynamic> newUsers = data['payload']['users'];
+              _onRefreshUsers?.call(newUsers);
+              break;
+
+            case 'callEnded':
+              print('[📴] Call ended event received.');
+              _onCallEnded?.call();
+              break;
+
+            default:
+              print('[⚠️] Unknown WebSocket event: $data');
           }
         } catch (e) {
           print('[❗] Error processing WebSocket message: $e');
@@ -96,13 +103,13 @@ class SocketService {
   }
 
   void _scheduleReconnect() {
-    // Wait a bit before reconnecting to avoid loops
     Future.delayed(Duration(seconds: 5), () {
       print('[🔁] Reconnecting to WebSocket...');
       connect();
     });
   }
 
+  /// Emit endCall event
   void emitEndCall(String user) {
     if (_channel != null) {
       final endCallData = json.encode({
@@ -117,10 +124,31 @@ class SocketService {
     }
   }
 
+  /// Emit set_in_call event
+  void emitSetInCall({
+    required String username,
+    required String inCallWith,
+  }) {
+    if (_channel != null) {
+      final setCallData = json.encode({
+        'type': 'set_in_call',
+        'user': username,
+        'in_call_with': inCallWith,
+      });
+
+      print('[📤] Sending set_in_call: $username <-> $inCallWith');
+      _channel!.sink.add(setCallData);
+    } else {
+      print('[⚠️] WebSocket not connected. Cannot send set_in_call.');
+    }
+  }
+
+  /// Listen for callEnded signal
   void listenToCallEvents({required CallEndedCallback onCallEnded}) {
     _onCallEnded = onCallEnded;
   }
 
+  /// Cleanup listeners
   void removeCallListeners() {
     print('[🧹] Removing WebSocket listeners.');
     _onCallEnded = null;

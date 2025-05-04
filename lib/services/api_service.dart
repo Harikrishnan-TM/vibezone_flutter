@@ -1,16 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart'; // For debugPrint
 import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'auth_service.dart'; // Your AuthService to get token
-
-import 'dart:io';
-
 import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart'; // For detecting MIME type
-import 'package:path/path.dart'; // For extracting file name from path
+import 'package:mime/mime.dart';
+import 'package:path/path.dart';
 
-
+import 'auth_service.dart'; // Your AuthService to get token
 
 class ApiService {
   static const String baseUrl = "https://vibezone-backend.fly.dev";
@@ -54,7 +52,6 @@ class ApiService {
   // 🔵 Fetch Profile Data
   static Future<Map<String, dynamic>?> fetchProfile() async {
     final String? token = await AuthService.getToken();
-
     if (token == null) {
       debugPrint('❌ No auth token found.');
       return null;
@@ -76,6 +73,12 @@ class ApiService {
       debugPrint("❌ Exception fetching profile: $e");
       return null;
     }
+  }
+
+  // ✅ NEW: Get Current Username
+  static Future<String?> getCurrentUsername() async {
+    final profile = await fetchProfile();
+    return profile?['username'];
   }
 
   // 🟠 Fetch Online Users
@@ -297,66 +300,109 @@ class ApiService {
     await AuthService.logout(); // Local cleanup
   }
 
-// 🔵 Upload KYC
-static Future<Map<String, dynamic>> uploadKyc({
-  required String realName,
-  required String bankName,
-  required String accountNumber,
-  required String ifscCode,
-  required File panCardFile,
-}) async {
-  try {
+  import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import '../auth/auth_service.dart'; // ✅ Ensure correct path to AuthService
+import '../constants.dart'; // ✅ Ensure baseUrl is defined here or imported correctly
+
+
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import '../auth/auth_service.dart'; // Make sure this is the correct path to AuthService
+
+const String baseUrl = 'https://vibezone-backend.fly.dev'; // Ensure it's defined here or passed appropriately
+
+
+  // 🔵 Upload KYC
+  static Future<Map<String, dynamic>> uploadKyc({
+    required String realName,
+    required String bankName,
+    required String accountNumber,
+    required String ifscCode,
+    required File panCardFile,
+  }) async {
+    try {
+      // 🔐 Retrieve token
+      final String? token = await AuthService.getToken();
+
+      if (token == null) {
+        return {'success': false, 'message': 'User not authenticated'};
+      }
+
+      final uri = Uri.parse('$baseUrl/upload-kyc/');
+      final request = http.MultipartRequest('POST', uri);
+
+      // ✅ Set headers
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      // ✅ Add form fields
+      request.fields['name'] = realName;
+      request.fields['bank_name'] = bankName;
+      request.fields['account_number'] = accountNumber;
+      request.fields['ifsc_code'] = ifscCode;
+
+      // ✅ Prepare PAN card file
+      final mimeType = lookupMimeType(panCardFile.path) ?? 'application/octet-stream';
+      final mediaType = MediaType.parse(mimeType);
+
+      final panCardImage = await http.MultipartFile.fromPath(
+        'pan_card_image',
+        panCardFile.path,
+        contentType: mediaType,
+      );
+      request.files.add(panCardImage);
+
+      // ✅ Send request
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      if (response.statusCode == 201) {
+        return {'success': true, 'message': 'KYC submitted successfully'};
+      } else {
+        return {
+          'success': false,
+          'message': 'Failed to submit KYC',
+          'errors': jsonDecode(responseBody),
+        };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'An error occurred: $e'};
+    }
+  }
+
+
+
+
+  // ✅ Set User in_call_with Status
+  static Future<void> setUserInCallWith(String username) async {
     final String? token = await AuthService.getToken();
-
     if (token == null) {
-      return {'success': false, 'message': 'User not authenticated'};
+      debugPrint('❌ No auth token found for setting in_call_with');
+      return;
     }
 
-    final uri = Uri.parse('$baseUrl/upload-kyc/');
-    final request = http.MultipartRequest('POST', uri);
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/set-in-call-with/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'in_call_with': username}),
+      );
 
-    request.headers['Authorization'] = 'Bearer $token';
-    request.headers['Accept'] = 'application/json';
-
-    request.fields['name'] = realName;
-    request.fields['bank_name'] = bankName;
-    request.fields['account_number'] = accountNumber;
-    request.fields['ifsc_code'] = ifscCode;
-
-    final mimeType = lookupMimeType(panCardFile.path) ?? 'application/octet-stream';
-    final mediaType = MediaType.parse(mimeType);
-
-    final panCardImage = await http.MultipartFile.fromPath(
-      'pan_card_image',
-      panCardFile.path,
-      contentType: mediaType,
-    );
-    request.files.add(panCardImage);
-
-    final response = await request.send();
-    final responseData = await response.stream.bytesToString();
-
-    if (response.statusCode == 201) {
-      return {'success': true, 'message': 'KYC submitted successfully'};
-    } else {
-      return {
-        'success': false,
-        'message': 'Failed to submit KYC',
-        'errors': jsonDecode(responseData),
-      };
+      if (response.statusCode != 200) {
+        debugPrint('⚠️ Failed to update in_call_with: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error setting in_call_with: $e');
     }
-  } catch (e) {
-    return {'success': false, 'message': 'An error occurred: $e'};
   }
 }
-
-  
-}
-
-
-
-
-
-
-
-

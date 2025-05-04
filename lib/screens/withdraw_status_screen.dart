@@ -52,6 +52,37 @@ class WithdrawStatusScreen extends StatelessWidget {
               ],
             ),
 
+            const SizedBox(height: 30),
+
+            // Explanation based on status
+            if (status.toLowerCase() == 'pending') 
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Your withdrawal request is being processed. Please wait until it is transferred to your bank.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              )
+            else if (status.toLowerCase() == 'transferred')
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'The requested amount has been successfully transferred to your bank account.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.green),
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Something went wrong. Please check back later or contact support.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.red),
+                ),
+              ),
+
             const Spacer(),
 
             // Done Button

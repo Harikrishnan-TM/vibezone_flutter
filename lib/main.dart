@@ -10,6 +10,8 @@ import 'package:vibezone_flutter/screens/buy_coins_screen.dart';
 import 'package:vibezone_flutter/services/socket_service.dart'; // ✅ Added for socket singleton
 import 'package:vibezone_flutter/screens/win_money_page.dart';
 import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
+import 'package:vibezone_flutter/main_container.dart';
+
 
 
 
@@ -65,7 +67,8 @@ class VibezoneApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainContainer(),
+        //'/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/buy-coins': (context) => const BuyCoinsScreen(),
         '/withdraw-status': (context) => const WithdrawStatusScreen(),

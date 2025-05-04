@@ -11,7 +11,7 @@ class BuyCoinsScreen extends StatefulWidget {
 class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
   final _coinsController = TextEditingController();
   String? _message;
-  bool _isLoading = false;  // Track loading state for better user experience
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -30,16 +30,26 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
     }
 
     setState(() {
-      _isLoading = true;  // Set loading state to true when starting the purchase
-      _message = null;  // Clear previous messages
+      _isLoading = true;
+      _message = null;
     });
 
     try {
-      final response = await ApiService.buyCoins(coins);  // Interact with the backend
+      final response = await ApiService.buyCoins(coins);
+
       if (response != null && response['message'] != null) {
+        final success = response['message'].toLowerCase().contains('success');
         setState(() {
-          _message = response['message'];  // Success or failure message from backend
+          _message = response['message'];
         });
+
+        if (success) {
+          // Wait briefly, then return to home to trigger wallet refresh
+          Future.delayed(const Duration(milliseconds: 1000), () {
+            if (mounted) Navigator.pop(context, true); // return true so wallet refreshes
+          });
+        }
+
       } else {
         setState(() {
           _message = 'Failed to purchase coins. Try again later.';
@@ -47,11 +57,11 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
       }
     } catch (e) {
       setState(() {
-        _message = 'An error occurred while purchasing coins: $e';  // Handle any network or server error
+        _message = 'An error occurred while purchasing coins: $e';
       });
     } finally {
       setState(() {
-        _isLoading = false;  // Set loading state to false once the operation is complete
+        _isLoading = false;
       });
     }
   }
@@ -84,13 +94,13 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isLoading ? null : _buyCoins,  // Disable button while loading
+              onPressed: _isLoading ? null : _buyCoins,
               child: _isLoading
-                  ? const CircularProgressIndicator()  // Show loading indicator when buying coins
+                  ? const CircularProgressIndicator()
                   : const Text('Buy'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,  // Updated to use backgroundColor
-                foregroundColor: Colors.white,       // Optional: set text color
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
               ),
             ),
@@ -100,15 +110,15 @@ class _BuyCoinsScreenState extends State<BuyCoinsScreen> {
                 _message!,
                 style: TextStyle(
                   fontSize: 16,
-                  color: _message == 'Coins purchased successfully!' ? Colors.green : Colors.red,
+                  color: _message == 'Coins purchased successfully!' || _message!.toLowerCase().contains('success')
+                      ? Colors.green
+                      : Colors.red,
                 ),
               ),
             ],
             const Spacer(),
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);  // Navigate back to the home screen
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('Back to Dashboard'),
             ),
           ],

@@ -17,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<dynamic> onlineUsers = [];
   bool incomingCall = false;
-  int homePageCoins = 0; // Update to use homePageCoins (for calls)
+  int walletCoins = 0; // 👈 Renamed for clarity
   late SocketService _socketService;
 
   @override
@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkAndLoadUsers();
-    _loadHomePageCoins();
+    _loadWalletCoins();
     _connectWebSocket();
   }
 
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadHomePageCoins(); // Refresh home page coins when returning from Buy Coins
+      _loadWalletCoins(); // Refresh wallet coins when returning from Buy Coins
     }
   }
 
@@ -70,17 +70,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // Update: Load home page coins (not wallet coins)
-  void _loadHomePageCoins() async {
+  // ✅ Load wallet coins (spendable)
+  void _loadWalletCoins() async {
     try {
       final profile = await ApiService.fetchProfile();
       if (mounted && profile != null) {
         setState(() {
-          homePageCoins = profile['home_page_coins'] ?? 0;  // Use home_page_coins field instead
+          walletCoins = profile['home_page_coins'] ?? 0;
         });
       }
     } catch (e) {
-      debugPrint('❌ Error loading home page coins: $e');
+      debugPrint('❌ Error loading wallet coins: $e');
     }
   }
 
@@ -144,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           MaterialPageRoute(
             builder: (context) => CallScreen(
               otherUser: username,
-              walletCoins: homePageCoins, // Use homePageCoins for call
+              walletCoins: walletCoins,
               isInitiator: true,
             ),
           ),
@@ -157,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
       }
     } catch (e) {
-      debugPrint('Call error: $e');
+      debugPrint('❌ Call error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Network error')),
@@ -181,14 +181,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           HomeContent(
             onlineUsers: onlineUsers,
-            walletCoins: homePageCoins, // Pass homePageCoins to HomeContent
+            walletCoins: walletCoins, // 👈 Pass updated coins
             onUsersUpdated: (newUsers) {
               setState(() {
                 onlineUsers = newUsers;
               });
             },
             onCall: _initiateCall,
-            onRefreshWallet: _loadHomePageCoins,  // Ensure it refreshes coins
+            onRefreshWallet: _loadWalletCoins,
           ),
           if (incomingCall)
             Container(

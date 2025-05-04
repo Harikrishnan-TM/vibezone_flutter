@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart'; // ✅ Added permission handler import
+import 'package:permission_handler/permission_handler.dart';
 import '../services/api_service.dart';
-import '../services/socket_service.dart'; // ✅ Added socket import
+import '../services/socket_service.dart';
 
 class CallScreen extends StatefulWidget {
   final String otherUser;
@@ -26,23 +26,43 @@ class _CallScreenState extends State<CallScreen> {
   bool _accepted = false;
   late int _currentCoins;
   late SocketService _socketService;
+  late String _currentUser;
 
   @override
   void initState() {
     super.initState();
     _currentCoins = widget.walletCoins;
 
-    _socketService = SocketService.getInstance(); // ✅ Assume singleton
-    _socketService.listenToCallEvents(
-      onCallEnded: _handleRemoteEndCall,
+    _socketService = SocketService.getInstance();
+    _socketService.listenToCallEvents(onCallEnded: _handleRemoteEndCall);
+
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    _currentUser = await ApiService.getCurrentUsername();
+
+    // Notify server about the ongoing call
+    _socketService.emitSetInCall(
+      username: _currentUser,
+      inCallWith: widget.otherUser,
     );
 
-    // Check for microphone and camera permissions before proceeding
-    _checkPermissions();
+    // Update backend about call initiation
+    await _setUserInCallStatus(widget.otherUser);
+
+    await _checkPermissions();
+  }
+
+  Future<void> _setUserInCallStatus(String username) async {
+    try {
+      await ApiService.setUserInCallWith(username);
+    } catch (e) {
+      debugPrint('Error updating call status: $e');
+    }
   }
 
   Future<void> _checkPermissions() async {
-    // Request microphone and camera permissions
     final micStatus = await Permission.microphone.request();
     final cameraStatus = await Permission.camera.request();
 
@@ -53,7 +73,6 @@ class _CallScreenState extends State<CallScreen> {
         _startTimer();
       }
     } else {
-      // Show a dialog to inform the user about permissions
       _showPermissionDialog();
     }
   }
@@ -65,12 +84,11 @@ class _CallScreenState extends State<CallScreen> {
         return AlertDialog(
           title: const Text('Permissions Required'),
           content: const Text(
-              'To make or receive calls, we need access to your microphone and camera. Please grant the necessary permissions.'),
+            'To make or receive calls, we need access to your microphone and camera. Please grant the necessary permissions.',
+          ),
           actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
             ),
           ],
@@ -83,16 +101,14 @@ class _CallScreenState extends State<CallScreen> {
     try {
       final response = await ApiService.acceptCall(widget.otherUser);
       if (response != null && response['accepted'] == true) {
-        setState(() {
-          _accepted = true;
-        });
+        setState(() => _accepted = true);
         _startTimer();
       } else {
-        debugPrint('❌ Call not accepted');
+        debugPrint('Call not accepted');
         _closeScreen();
       }
     } catch (e) {
-      debugPrint('⚠️ Error accepting call: $e');
+      debugPrint('Error accepting call: $e');
       _closeScreen();
     }
   }
@@ -103,7 +119,6 @@ class _CallScreenState extends State<CallScreen> {
         _secondsElapsed++;
       });
 
-      // Every 60 seconds (1 minute), deduct a coin
       if (_secondsElapsed % 60 == 0) {
         await _deductCoins();
       }
@@ -120,12 +135,12 @@ class _CallScreenState extends State<CallScreen> {
           });
         }
         if (response['end_call'] == true) {
-          debugPrint('❌ Coins over. Ending call.');
+          debugPrint('Coins depleted. Ending call.');
           _endCall();
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Error deducting coins: $e');
+      debugPrint('Error deducting coins: $e');
     }
   }
 
@@ -133,16 +148,23 @@ class _CallScreenState extends State<CallScreen> {
     try {
       _timer?.cancel();
       await ApiService.endCall(widget.otherUser);
-      _socketService.emitEndCall(widget.otherUser); // ✅ Notify other user
+      _socketService.emitEndCall(widget.otherUser);
+
+      // Clear in-call status
+      _socketService.emitSetInCall(
+        username: _currentUser,
+        inCallWith: '',
+      );
+      await _setUserInCallStatus('');
     } catch (e) {
-      debugPrint('⚠️ Error ending call: $e');
+      debugPrint('Error ending call: $e');
     } finally {
       _closeScreen();
     }
   }
 
   void _handleRemoteEndCall() {
-    debugPrint('📞 Call ended by other user.');
+    debugPrint('Call ended by other user.');
     if (mounted) {
       _timer?.cancel();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -167,7 +189,7 @@ class _CallScreenState extends State<CallScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _socketService.removeCallListeners(); // ✅ Clean up listeners
+    _socketService.removeCallListeners();
     super.dispose();
   }
 
