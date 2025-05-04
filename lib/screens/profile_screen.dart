@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import 'win_money_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -13,18 +15,30 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   String username = '';
-  int walletCoins = 0;
+  int earningCoins = 0;
   bool isGirl = false;
   bool isOnline = false;
-  String kycStatus = 'pending'; // 🟡 From backend profile API
+  String kycStatus = 'pending';
   bool incomingCallOverlayVisible = false;
   Timer? _callCheckTimer;
+  String? authToken;
+
+  final String baseUrl = 'https://vibezone-backend.fly.dev';
 
   @override
   void initState() {
     super.initState();
-    _fetchProfileData();
+    _loadTokenAndFetchAll();
     _startIncomingCallChecker();
+  }
+
+  Future<void> _loadTokenAndFetchAll() async {
+    authToken = await AuthService.getToken();
+    if (authToken == null) return;
+    await Future.wait([
+      _fetchProfileData(),
+      _fetchEarningCoins(),
+    ]);
   }
 
   Future<void> _fetchProfileData() async {
@@ -33,7 +47,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted && profile != null && profile['success'] == true && profile['data'] != null) {
         setState(() {
           username = profile['data']['username'] ?? '';
-          walletCoins = profile['data']['coins'] ?? 0;
           isGirl = profile['data']['is_girl'] ?? false;
           isOnline = profile['data']['is_online'] ?? false;
           kycStatus = (profile['data']['kyc_status'] ?? 'pending').toString().toLowerCase();
@@ -43,6 +56,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to fetch profile')),
+        );
+      }
+    }
+  }
+
+  Future<void> _fetchEarningCoins() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/get-earnings-wallet/'),
+        headers: {'Authorization': 'Token $authToken'},
+      );
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (mounted) {
+          setState(() {
+            earningCoins = data['data']?['earnings_coins'] ?? 0;
+          });
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to fetch earning coins')),
         );
       }
     }
@@ -114,7 +150,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 if (isGirl) ...[
                   Text(
-                    'Your wallet balance: $walletCoins coins',
+                    'Withdrawable Coins: $earningCoins',
                     style: const TextStyle(fontSize: 18),
                     textAlign: TextAlign.center,
                   ),
@@ -130,8 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (_) => WinMoneyPage(
-                            walletCoins: walletCoins,
-                            isKycCompleted: isKycCompleted,
+                            initialEarningCoins: earningCoins,
                           ),
                         ),
                       );

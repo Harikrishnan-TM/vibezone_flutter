@@ -6,16 +6,16 @@ import '../services/auth_service.dart';
 import 'withdraw_status_screen.dart';
 
 class WinMoneyPage extends StatefulWidget {
-  final int? initialWalletCoins; // Optional: if passed from other screen
+  final int? walletCoins; // Renamed for consistency
 
-  const WinMoneyPage({Key? key, this.initialWalletCoins}) : super(key: key);
+  const WinMoneyPage({Key? key, this.walletCoins}) : super(key: key);
 
   @override
   State<WinMoneyPage> createState() => _WinMoneyPageState();
 }
 
 class _WinMoneyPageState extends State<WinMoneyPage> {
-  int walletCoins = 0;
+  int earningCoins = 0;
   bool isKycCompleted = false;
   bool isLoading = true;
   String? authToken;
@@ -25,7 +25,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
   @override
   void initState() {
     super.initState();
-    walletCoins = widget.initialWalletCoins ?? 0;
+    earningCoins = widget.walletCoins ?? 0;
     _loadTokenAndFetchData();
   }
 
@@ -56,9 +56,11 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
         final kycData = jsonDecode(kycRes.body);
 
         setState(() {
-          walletCoins = walletData['data']?['earnings_coins'] ?? 0;
-          isKycCompleted =
-              (kycData['kyc_status'] ?? '').toString().toLowerCase() == 'approved';
+          earningCoins = walletData['data']?['earnings_coins'] ?? 0;
+          isKycCompleted = (kycData['kyc_status'] ?? '')
+                  .toString()
+                  .toLowerCase() ==
+              'approved';
           isLoading = false;
         });
       } else {
@@ -77,8 +79,8 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
       return;
     }
 
-    if (walletCoins == 0) {
-      _showSnackBar('You have no coins to withdraw.');
+    if (earningCoins == 0) {
+      _showSnackBar('You have no earnings to withdraw.');
       return;
     }
 
@@ -91,7 +93,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
           'Content-Type': 'application/json',
           'Authorization': 'Token $authToken',
         },
-        body: jsonEncode({'coins': walletCoins}),
+        body: jsonEncode({'coins': earningCoins}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -101,7 +103,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
           context,
           MaterialPageRoute(
             builder: (_) => WithdrawStatusScreen(
-              amount: walletCoins.toDouble(),
+              amount: earningCoins.toDouble(),
               status: 'Pending',
             ),
           ),
@@ -124,7 +126,7 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final double rupeeAmount = walletCoins.toDouble();
+    final double rupeeAmount = earningCoins.toDouble();
 
     return Scaffold(
       appBar: AppBar(
@@ -141,13 +143,15 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                   const SizedBox(height: 40),
                   Text(
                     'You have ₹${rupeeAmount.toStringAsFixed(2)}',
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '($walletCoins coins in your wallet)',
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                    '($earningCoins withdrawable coins)',
+                    style:
+                        const TextStyle(fontSize: 18, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 30),
@@ -161,9 +165,11 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                       const SizedBox(width: 10),
                       if (!isKycCompleted)
                         ElevatedButton(
-                          onPressed: () => Navigator.pushNamed(context, '/kyc'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/kyc'),
                           style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
                             textStyle: const TextStyle(fontSize: 14),
                           ),
                           child: const Text('Verify KYC'),
@@ -181,7 +187,8 @@ class _WinMoneyPageState extends State<WinMoneyPage> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 16),
                       textStyle: const TextStyle(fontSize: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
