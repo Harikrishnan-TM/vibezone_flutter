@@ -11,6 +11,8 @@ import 'package:vibezone_flutter/services/socket_service.dart';
 import 'package:vibezone_flutter/screens/win_money_page.dart';
 import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
 import 'package:vibezone_flutter/main_container.dart';
+import 'package:vibezone_flutter/screens/kyc_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
