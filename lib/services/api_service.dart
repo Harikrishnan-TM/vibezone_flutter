@@ -299,7 +299,7 @@ class ApiService {
     await AuthService.logout(); // Local cleanup
   }
 
-  // 🔵 Upload KYC
+  // 🔵 Upload KYC (with safe error handling)
   static Future<Map<String, dynamic>> uploadKyc({
     required String realName,
     required String bankName,
@@ -336,11 +336,20 @@ class ApiService {
       if (response.statusCode == 201) {
         return {'success': true, 'message': 'KYC submitted successfully'};
       } else {
-        return {
-          'success': false,
-          'message': 'Failed to submit KYC',
-          'errors': jsonDecode(responseBody),
-        };
+        try {
+          final parsed = jsonDecode(responseBody);
+          return {
+            'success': false,
+            'message': 'Failed to submit KYC',
+            'errors': parsed,
+          };
+        } catch (_) {
+          return {
+            'success': false,
+            'message': 'Failed to submit KYC',
+            'errors': responseBody,
+          };
+        }
       }
     } catch (e) {
       return {'success': false, 'message': 'An error occurred: $e'};
