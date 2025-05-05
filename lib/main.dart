@@ -74,6 +74,7 @@ class VibezoneApp extends StatelessWidget {
             initialEarningCoins: args['initialEarningCoins'] ?? 0,
           );
         },
+        '/kyc': (context) => const KycScreen(), // ✅ <-- Add this line
       },
     );
   }
