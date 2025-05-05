@@ -306,29 +306,20 @@ class ApiService {
     required String accountNumber,
     required String ifscCode,
     required File panCardFile,
+    required String authToken,
   }) async {
     try {
-      // 🔐 Retrieve token
-      final String? token = await AuthService.getToken();
-
-      if (token == null) {
-        return {'success': false, 'message': 'User not authenticated'};
-      }
-
       final uri = Uri.parse('$baseUrl/upload-kyc/');
       final request = http.MultipartRequest('POST', uri);
 
-      // ✅ Set headers
-      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Authorization'] = 'Bearer $authToken';
       request.headers['Accept'] = 'application/json';
 
-      // ✅ Add form fields
       request.fields['name'] = realName;
       request.fields['bank_name'] = bankName;
       request.fields['account_number'] = accountNumber;
       request.fields['ifsc_code'] = ifscCode;
 
-      // ✅ Prepare PAN card file
       final mimeType = lookupMimeType(panCardFile.path) ?? 'application/octet-stream';
       final mediaType = MediaType.parse(mimeType);
 
@@ -339,7 +330,6 @@ class ApiService {
       );
       request.files.add(panCardImage);
 
-      // ✅ Send request
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
 
