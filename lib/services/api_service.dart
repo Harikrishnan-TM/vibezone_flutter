@@ -13,6 +13,7 @@ class ApiService {
   static const String baseUrl = "https://vibezone-backend.fly.dev";
   static const String wsUrl = "wss://vibezone-backend.fly.dev/ws/online-users/";
   static WebSocketChannel? _channel;
+  static int _reconnectAttempts = 0;
 
   // 🔌 Connect to WebSocket
   static void connectToWebSocket({
@@ -22,23 +23,44 @@ class ApiService {
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
-      _channel!.stream.listen((event) {
-        final data = json.decode(event);
-        debugPrint("📡 WS Message: $data");
+      _channel!.stream.listen(
+        (event) {
+          final data = json.decode(event);
+          debugPrint("📡 WS Message: $data");
 
-        if (data['type'] == 'call') {
-          onIncomingCall();
-        } else if (data['type'] == 'refresh') {
-          onRefreshUsers(data['payload']['users']);
-        }
-      }, onError: (error) {
-        debugPrint('❌ WebSocket error: $error');
-      }, onDone: () {
-        debugPrint('🛑 WebSocket closed.');
-      });
+          if (data['type'] == 'call') {
+            onIncomingCall();
+          } else if (data['type'] == 'refresh') {
+            onRefreshUsers(data['payload']['users']);
+          }
+        },
+        onError: (error) {
+          debugPrint('❌ WebSocket error: $error');
+        },
+        onDone: () {
+          debugPrint('🛑 WebSocket closed. Attempting to reconnect...');
+          _attemptReconnect(onIncomingCall, onRefreshUsers);
+        },
+      );
     } catch (e) {
       debugPrint('❌ Failed to connect to WebSocket: $e');
+      _attemptReconnect(onIncomingCall, onRefreshUsers);
     }
+  }
+
+  // Attempt to reconnect to WebSocket with exponential backoff
+  static void _attemptReconnect(
+      Function onIncomingCall, Function(List<dynamic>) onRefreshUsers) {
+    _reconnectAttempts++;
+    final delay = Duration(seconds: (2 ^ _reconnectAttempts).clamp(1, 30));
+
+    debugPrint('⏳ Reconnecting in $delay...');
+    Future.delayed(delay, () {
+      connectToWebSocket(
+        onIncomingCall: onIncomingCall,
+        onRefreshUsers: onRefreshUsers,
+      );
+    });
   }
 
   // ❌ Disconnect WebSocket
@@ -309,10 +331,11 @@ class ApiService {
     required String authToken,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/api/submit-kyc/'); // Updated endpoint
+      final uri = Uri.parse('$baseUrl/submit-kyc/'); // Updated endpoint
       final request = http.MultipartRequest('POST', uri);
 
-      request.headers['Authorization'] = 'Bearer $authToken';
+      request.headers['Authorization'] = 'Token $authToken';
+      //request.headers['Authorization'] = 'Bearer $authToken';
       request.headers['Accept'] = 'application/json';
 
       request.fields['name'] = realName;
