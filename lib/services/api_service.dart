@@ -299,11 +299,6 @@ class ApiService {
     await AuthService.logout(); // Local cleanup
   }
 
-  
-
-
-
-
   // 🔵 Upload KYC (with safe error handling)
   static Future<Map<String, dynamic>> uploadKyc({
     required String realName,
@@ -314,7 +309,7 @@ class ApiService {
     required String authToken,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/upload-kyc/');
+      final uri = Uri.parse('$baseUrl/api/submit-kyc/'); // Updated endpoint
       final request = http.MultipartRequest('POST', uri);
 
       request.headers['Authorization'] = 'Bearer $authToken';
@@ -329,7 +324,7 @@ class ApiService {
       final mediaType = MediaType.parse(mimeType);
 
       final panCardImage = await http.MultipartFile.fromPath(
-        'pan_card_image',
+        'pan_card_image', // Ensure this is the same field name as the backend
         panCardFile.path,
         contentType: mediaType,
       );
@@ -363,13 +358,6 @@ class ApiService {
       return {'success': false, 'message': 'An error occurred: $e'};
     }
   }
-
-  
-
-
-
-
-
 
   // ✅ Set User in_call_with Status
   static Future<void> setUserInCallWith(String username) async {
