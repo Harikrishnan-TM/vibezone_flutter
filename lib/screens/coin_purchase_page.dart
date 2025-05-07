@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:http/http.dart' as http;
-import '../services/auth_service.dart'; // Make sure this provides getUsername()
+import '../services/auth_service.dart'; // Ensure getUsername() is defined here
 
 class CoinPurchasePage extends StatefulWidget {
   final VoidCallback? onCoinsUpdated;
@@ -89,7 +89,14 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
                     final result = jsonDecode(message.message);
                     Navigator.of(context).pop(); // Close dialog
 
-                    final username = await AuthService.getUsername(); // Get current user
+                    final username = await AuthService.getUsername();
+                    if (username == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("User not found. Please log in again.")),
+                      );
+                      return;
+                    }
+
                     await confirmPaymentOnBackend(
                       paymentId: result['payment_id'],
                       orderId: result['order_id'],
