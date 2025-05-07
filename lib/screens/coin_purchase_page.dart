@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // Import the URL Launcher
+import 'package:url_launcher/url_launcher.dart'; // Correct URL Launcher import
 import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 
@@ -44,23 +44,14 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
-      // Construct the Razorpay checkout URL
-      final razorpayUrl = Uri.parse("https://checkout.razorpay.com/v1/checkout.js")
-          .replace(queryParameters: {
-        "key": data['key'] ?? 'rzp_test_...',
-        "amount": data['amount'].toString(),
-        "currency": "INR",
-        "order_id": data['id'],
-        "handler": "function (response){ window.parent.postMessage(JSON.stringify({payment_id: response.razorpay_payment_id, order_id: response.razorpay_order_id, signature: response.razorpay_signature}), '*'); }",
-        "theme": "{ color: '#3399cc' }",
-      });
+      // Construct your own hosted payment page URL or use Razorpay Checkout Embed method
+      final Uri razorpayUrl = Uri.parse("https://vibezone-backend.fly.dev/checkout-page?order_id=${data['id']}");
 
-      // Launch the Razorpay URL in the browser
-      if (await canLaunch(razorpayUrl.toString())) {
-        await launch(razorpayUrl.toString(), forceSafariVC: false, forceWebView: false);
+      if (await canLaunchUrl(razorpayUrl)) {
+        await launchUrl(razorpayUrl, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to open payment link in browser")),
+          const SnackBar(content: Text("Could not launch payment URL")),
         );
       }
     } else {
