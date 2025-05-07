@@ -103,8 +103,12 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
                 "color": "#3399cc"
               }
             };
-            var rzp1 = new Razorpay(options);
-            rzp1.open();
+            try {
+              var rzp1 = new Razorpay(options);
+              rzp1.open();
+            } catch (e) {
+              alert("JS Error: " + e.message);
+            }
           </script>
         </body>
         </html>
