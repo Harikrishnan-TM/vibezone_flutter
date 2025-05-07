@@ -12,7 +12,7 @@ import 'package:vibezone_flutter/screens/win_money_page.dart';
 import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
 import 'package:vibezone_flutter/main_container.dart';
 import 'package:vibezone_flutter/screens/kyc_screen.dart';
-import 'package:your_app_name/pages/coin_purchase_page.dart';
+import 'package:vibezone_flutter/screens/coin_purchase_page.dart';
 
 
 
