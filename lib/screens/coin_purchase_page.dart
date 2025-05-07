@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:http/http.dart' as http;
-import '../services/auth_service.dart'; // Ensure getUsername() is defined here
+import '../services/auth_service.dart';
 
 class CoinPurchasePage extends StatefulWidget {
   final VoidCallback? onCoinsUpdated;
@@ -15,7 +17,7 @@ class CoinPurchasePage extends StatefulWidget {
 
 class _CoinPurchasePageState extends State<CoinPurchasePage> {
   bool isWebsiteSelected = true;
-  WebViewController? _controller;
+  late final WebViewController _controller;
 
   final List<Map<String, dynamic>> websitePrices = [
     {"coins": 100, "price": 100},
@@ -31,7 +33,41 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
     {"coins": 400, "price": 450},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'Flutter',
+        onMessageReceived: (JavaScriptMessage message) async {
+          final result = jsonDecode(message.message);
+          Navigator.of(context).pop();
+
+          final username = await AuthService.getUsername();
+          if (username == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("User not found. Please log in again.")),
+            );
+            return;
+          }
+
+          await confirmPaymentOnBackend(
+            paymentId: result['payment_id'],
+            orderId: result['order_id'],
+            signature: result['signature'],
+            amount: _lastAmount,
+            username: username,
+          );
+        },
+      );
+  }
+
+  int _lastAmount = 0;
+
   Future<void> startWebsitePayment(int amount) async {
+    _lastAmount = amount;
+
     final url = Uri.parse("https://vibezone-backend.fly.dev/create-order/");
     final response = await http.post(
       url,
@@ -74,62 +110,31 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
         </html>
       ''';
 
+      await _controller.loadHtmlString(checkoutHtml);
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           content: SizedBox(
             height: 500,
             width: 300,
-            child: WebView(
-              javascriptMode: JavascriptMode.unrestricted,
-              javascriptChannels: {
-                JavascriptChannel(
-                  name: 'Flutter',
-                  onMessageReceived: (message) async {
-                    final result = jsonDecode(message.message);
-                    Navigator.of(context).pop(); // Close dialog
-
-                    final username = await AuthService.getUsername();
-                    if (username == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("User not found. Please log in again.")),
-                      );
-                      return;
-                    }
-
-                    await confirmPaymentOnBackend(
-                      paymentId: result['payment_id'],
-                      orderId: result['order_id'],
-                      signature: result['signature'],
-                      amount: amount,
-                      username: username,
-                    );
-                  },
-                ),
-              },
-              onWebViewCreated: (controller) async {
-                _controller = controller;
-                await controller.loadUrl('about:blank'); // Load an empty page initially
-                await controller.loadUrl(Uri.dataFromString(checkoutHtml, mimeType: 'text/html').toString());
-              },
-              onPageFinished: (_) async {
-                await _controller?.runJavaScript('''
-                  window.addEventListener("message", function(event) {
-                    if (event.data) {
-                      Flutter.postMessage(event.data);
-                    }
-                  });
-                ''');
-
-              },
-            ),
+            child: WebViewWidget(controller: _controller),
           ),
         ),
       );
+
+      await _controller.runJavaScript('''
+        window.addEventListener("message", function(event) {
+          if (event.data) {
+            Flutter.postMessage(event.data);
+          }
+        });
+      ''');
+
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Failed to create Razorpay order"),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to create Razorpay order")),
+      );
     }
   }
 
