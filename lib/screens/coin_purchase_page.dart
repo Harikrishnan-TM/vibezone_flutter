@@ -109,7 +109,8 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
               },
               onWebViewCreated: (controller) async {
                 _controller = controller;
-                await controller.loadHtmlString(checkoutHtml);
+                await controller.loadUrl('about:blank'); // Load an empty page initially
+                await controller.loadUrl(Uri.dataFromString(checkoutHtml, mimeType: 'text/html').toString());
               },
               onPageFinished: (_) async {
                 await _controller?.runJavaScript('''
@@ -119,6 +120,7 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
                     }
                   });
                 ''');
+
               },
             ),
           ),
