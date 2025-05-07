@@ -20,7 +20,8 @@ class AuthService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         await saveToken(data['token']);
-        print('✅ Login successful: Token saved.');
+        await saveUsername(data['username']); // NEW: Save username
+        print('✅ Login successful: Token and username saved.');
         return 'success';
       } else {
         final Map<String, dynamic> errorData = jsonDecode(response.body);
@@ -48,7 +49,8 @@ class AuthService {
       if (response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         await saveToken(data['token']);
-        print('✅ Signup successful: Token saved.');
+        await saveUsername(data['username']); // NEW: Save username
+        print('✅ Signup successful: Token and username saved.');
         return 'success';
       } else {
         final Map<String, dynamic> errorData = jsonDecode(response.body);
@@ -72,6 +74,17 @@ class AuthService {
     }
   }
 
+  // 💾 Save username locally
+  static Future<void> saveUsername(String username) async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username);
+      print('👤 Username saved in SharedPreferences');
+    } catch (e) {
+      print('❌ Error saving username: $e');
+    }
+  }
+
   // 📤 Retrieve token
   static Future<String?> getToken() async {
     try {
@@ -85,14 +98,28 @@ class AuthService {
     }
   }
 
-  // 🗑 Remove token (logout)
+  // 📤 Retrieve username
+  static Future<String?> getUsername() async {
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? username = prefs.getString('username');
+      print('📥 Retrieved username: $username');
+      return username;
+    } catch (e) {
+      print('❌ Error retrieving username: $e');
+      return null;
+    }
+  }
+
+  // 🗑 Remove token and username (logout)
   static Future<void> logout() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
-      print('🚫 Token removed');
+      await prefs.remove('username'); // NEW
+      print('🚫 Token and username removed');
     } catch (e) {
-      print('❌ Error removing token: $e');
+      print('❌ Error removing credentials: $e');
     }
   }
 

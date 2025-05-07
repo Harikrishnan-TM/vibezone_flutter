@@ -12,6 +12,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   permission_handler: ^11.3.0
+  webview_flutter: ^4.2.2  # Ensure this version or latest
+  
 
   # Main packages
   http: ^0.13.5

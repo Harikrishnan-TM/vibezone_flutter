@@ -68,8 +68,9 @@ class VibezoneApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const MainContainer(),
         '/profile': (context) => const ProfileScreen(),
-        '/buy-coins': (context) => const BuyCoinsScreen(),
+        //'/buy-coins': (context) => const BuyCoinsScreen(),
         '/withdraw-status': (context) => const WithdrawStatusScreen(),
+        '/buy-coins': (context) => const CoinPurchasePage(), // <-- THIS is key
         '/win-money': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return WinMoneyPage(

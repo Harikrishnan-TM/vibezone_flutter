@@ -8,7 +8,7 @@ class HomeContent extends StatefulWidget {
   final Function(List<dynamic>) onUsersUpdated;
   final Function(String) onCall;
   final int walletCoins;
-  final VoidCallback onRefreshWallet; // ✅ New callback to refresh wallet
+  final VoidCallback onRefreshWallet;
 
   const HomeContent({
     Key? key,
@@ -16,7 +16,7 @@ class HomeContent extends StatefulWidget {
     required this.onUsersUpdated,
     required this.onCall,
     required this.walletCoins,
-    required this.onRefreshWallet, // ✅ required
+    required this.onRefreshWallet,
   }) : super(key: key);
 
   @override
@@ -38,10 +38,9 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  // Called when navigating to Buy Coins screen and returning
   Future<void> _navigateAndRefreshCoins() async {
     await Navigator.pushNamed(context, '/buy-coins');
-    widget.onRefreshWallet(); // ✅ Call wallet refresh after returning
+    widget.onRefreshWallet(); // Refresh wallet after returning
   }
 
   @override
@@ -62,11 +61,10 @@ class _HomeContentState extends State<HomeContent> {
                   children: [
                     const Text('👦'),
                     const SizedBox(width: 8),
-                    // Display wallet coins dynamically
                     Text('🪙 ${widget.walletCoins}'),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: _navigateAndRefreshCoins, // ✅ Updated handler
+                      onPressed: _navigateAndRefreshCoins,
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                       child: const Text('Buy Coins'),
                     ),
