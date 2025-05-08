@@ -15,8 +15,8 @@
     <application
         android:label="vibezone_flutter"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
-        android:usesCleartextTraffic="true">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"> <!-- Corrected position of usesCleartextTraffic -->
         
         <activity
             android:name=".MainActivity"
@@ -33,9 +33,14 @@
                 android:resource="@style/NormalTheme"
             />
             
+            <!-- Intent Filter for Deep Link -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="myapp" />
             </intent-filter>
         </activity>
 

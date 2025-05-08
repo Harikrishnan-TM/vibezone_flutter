@@ -38,9 +38,11 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  Future<void> _navigateAndRefreshCoins() async {
-    await Navigator.pushNamed(context, '/buy-coins');
-    widget.onRefreshWallet(); // Refresh wallet after returning
+  Future<void> _navigateToBuyCoins() async {
+    final result = await Navigator.pushNamed(context, '/buy-coins');
+    if (result == true) {
+      widget.onRefreshWallet(); // Refresh wallet coins if coins were bought
+    }
   }
 
   @override
@@ -64,7 +66,7 @@ class _HomeContentState extends State<HomeContent> {
                     Text('🪙 ${widget.walletCoins}'),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: _navigateAndRefreshCoins,
+                      onPressed: _navigateToBuyCoins,
                       style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
                       child: const Text('Buy Coins'),
                     ),

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart'; // Correct URL Launcher import
+import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'package:uni_links/uni_links.dart';
+import 'dart:async';
 import '../services/auth_service.dart';
 
 class CoinPurchasePage extends StatefulWidget {
@@ -16,6 +18,7 @@ class CoinPurchasePage extends StatefulWidget {
 class _CoinPurchasePageState extends State<CoinPurchasePage> {
   bool isWebsiteSelected = true;
   int _lastAmount = 0;
+  StreamSubscription? _sub;
 
   final List<Map<String, dynamic>> websitePrices = [
     {"coins": 100, "price": 100},
@@ -31,6 +34,43 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
     {"coins": 400, "price": 450},
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _listenToDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  void _listenToDeepLinks() {
+    _sub = uriLinkStream.listen((Uri? uri) async {
+      if (uri != null &&
+          uri.scheme == 'myapp' &&
+          uri.host == 'payment-success') {
+        final paymentId = uri.queryParameters['payment_id'];
+        final orderId = uri.queryParameters['order_id'];
+        final signature = uri.queryParameters['signature'];
+
+        final username = await AuthService.getUsername();
+        if (paymentId != null && orderId != null && signature != null && username != null) {
+          await confirmPaymentOnBackend(
+            paymentId: paymentId,
+            orderId: orderId,
+            signature: signature,
+            amount: _lastAmount,
+            username: username,
+          );
+        }
+      }
+    }, onError: (err) {
+      debugPrint('Deep link error: $err');
+    });
+  }
+
   Future<void> startWebsitePayment(int amount) async {
     _lastAmount = amount;
 
@@ -44,11 +84,13 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
-      // Construct your own hosted payment page URL or use Razorpay Checkout Embed method
-      final Uri razorpayUrl = Uri.parse("https://vibezone-backend.fly.dev/checkout-page?order_id=${data['id']}");
+      final Uri paymentUrl = Uri.parse(
+        'https://techno-official.github.io/vibezone-payment-page/checkout.html'
+        '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}'
+      );
 
-      if (await canLaunchUrl(razorpayUrl)) {
-        await launchUrl(razorpayUrl, mode: LaunchMode.externalApplication);
+      if (await canLaunchUrl(paymentUrl)) {
+        await launchUrl(paymentUrl, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Could not launch payment URL")),
@@ -85,7 +127,10 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Coins added successfully!")),
       );
-      widget.onCoinsUpdated?.call();
+      widget.onCoinsUpdated?.call(); // Notify parent to refresh coins
+      if (mounted) {
+        Navigator.pop(context); // Close this page after successful payment
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Payment succeeded but failed to update wallet")),
