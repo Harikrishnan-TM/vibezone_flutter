@@ -6,6 +6,7 @@ class AuthService {
   // API endpoints
   final String _loginUrl = 'https://vibezone-backend.fly.dev/api/login/';
   final String _signupUrl = 'https://vibezone-backend.fly.dev/api/signup/';
+  static const String _confirmPaymentUrl = 'https://vibezone-backend.fly.dev/api/confirm-payment/';
 
   // 🔐 Login User
   Future<String> loginUser(String username, String password) async {
@@ -20,7 +21,7 @@ class AuthService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         await saveToken(data['token']);
-        await saveUsername(data['username']); // NEW: Save username
+        await saveUsername(data['username']);
         print('✅ Login successful: Token and username saved.');
         return 'success';
       } else {
@@ -49,7 +50,7 @@ class AuthService {
       if (response.statusCode == 201) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         await saveToken(data['token']);
-        await saveUsername(data['username']); // NEW: Save username
+        await saveUsername(data['username']);
         print('✅ Signup successful: Token and username saved.');
         return 'success';
       } else {
@@ -63,7 +64,47 @@ class AuthService {
     }
   }
 
-  // 💾 Save token locally
+  // ✅ Confirm Payment
+  static Future<bool> confirmPayment(
+    String paymentId,
+    String orderId,
+    String signature,
+    String amount,
+  ) async {
+    try {
+      final token = await getToken();
+      final username = await getUsername();
+      if (token == null || username == null) return false;
+
+      final response = await http.post(
+        Uri.parse(_confirmPaymentUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+        body: jsonEncode({
+          'payment_id': paymentId,
+          'order_id': orderId,
+          'signature': signature,
+          'amount': amount,
+          'username': username,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ Payment confirmation successful');
+        return true;
+      } else {
+        print('❌ Payment confirmation failed: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Error confirming payment: $e');
+      return false;
+    }
+  }
+
+  // 💾 Save token
   static Future<void> saveToken(String token) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -74,7 +115,7 @@ class AuthService {
     }
   }
 
-  // 💾 Save username locally
+  // 💾 Save username
   static Future<void> saveUsername(String username) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -89,9 +130,7 @@ class AuthService {
   static Future<String?> getToken() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? token = prefs.getString('auth_token');
-      print('📥 Retrieved token: $token');
-      return token;
+      return prefs.getString('auth_token');
     } catch (e) {
       print('❌ Error retrieving token: $e');
       return null;
@@ -102,30 +141,28 @@ class AuthService {
   static Future<String?> getUsername() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      final String? username = prefs.getString('username');
-      print('📥 Retrieved username: $username');
-      return username;
+      return prefs.getString('username');
     } catch (e) {
       print('❌ Error retrieving username: $e');
       return null;
     }
   }
 
-  // 🗑 Remove token and username (logout)
+  // 🗑 Logout
   static Future<void> logout() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
-      await prefs.remove('username'); // NEW
+      await prefs.remove('username');
       print('🚫 Token and username removed');
     } catch (e) {
       print('❌ Error removing credentials: $e');
     }
   }
 
-  // ✅ Check if user is logged in
+  // ✅ Is Logged In
   static Future<bool> isLoggedIn() async {
-    final token = await AuthService.getToken();
+    final token = await getToken();
     return token != null;
   }
 }

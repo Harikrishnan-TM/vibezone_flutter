@@ -11,13 +11,13 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<dynamic> onlineUsers = [];
   bool incomingCall = false;
-  int walletCoins = 0; // 👈 Renamed for clarity
+  int walletCoins = 0;
   late SocketService _socketService;
 
   @override
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadWalletCoins(); // Refresh wallet coins when returning from Buy Coins
+      _loadWalletCoins();
     }
   }
 
@@ -70,7 +70,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // ✅ Load wallet coins (spendable)
   void _loadWalletCoins() async {
     try {
       final profile = await ApiService.fetchProfile();
@@ -181,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           HomeContent(
             onlineUsers: onlineUsers,
-            walletCoins: walletCoins, // 👈 Pass updated coins
+            walletCoins: walletCoins,
             onUsersUpdated: (newUsers) {
               setState(() {
                 onlineUsers = newUsers;
