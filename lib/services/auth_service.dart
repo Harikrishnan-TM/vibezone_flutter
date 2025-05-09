@@ -6,7 +6,8 @@ class AuthService {
   // API endpoints
   final String _loginUrl = 'https://vibezone-backend.fly.dev/api/login/';
   final String _signupUrl = 'https://vibezone-backend.fly.dev/api/signup/';
-  static const String _confirmPaymentUrl = 'https://vibezone-backend.fly.dev/api/confirm-payment/';
+  static const String _confirmPaymentUrl =
+      'https://vibezone-backend.fly.dev/api/confirm-payment/';
 
   // 🔐 Login User
   Future<String> loginUser(String username, String password) async {
@@ -36,7 +37,8 @@ class AuthService {
   }
 
   // 📝 Signup User
-  Future<String> signupUser(String username, String email, String password, bool isGirl) async {
+  Future<String> signupUser(
+      String username, String email, String password, bool isGirl) async {
     final Uri url = Uri.parse(_signupUrl);
 
     try {
@@ -64,7 +66,7 @@ class AuthService {
     }
   }
 
-  // ✅ Confirm Payment (refactored with named parameters)
+  // ✅ Confirm Payment (refactored for clarity and debugging)
   static Future<bool> confirmPayment({
     required String paymentId,
     required String orderId,
@@ -74,7 +76,11 @@ class AuthService {
     try {
       final token = await getToken();
       final username = await getUsername();
-      if (token == null || username == null) return false;
+
+      if (token == null || username == null) {
+        print('❌ Token or username is null, cannot confirm payment.');
+        return false;
+      }
 
       final response = await http.post(
         Uri.parse(_confirmPaymentUrl),
@@ -95,11 +101,11 @@ class AuthService {
         print('✅ Payment confirmation successful');
         return true;
       } else {
-        print('❌ Payment confirmation failed: ${response.body}');
+        print('❌ Payment confirmation failed (${response.statusCode}): ${response.body}');
         return false;
       }
     } catch (e) {
-      print('❌ Error confirming payment: $e');
+      print('❌ Exception during payment confirmation: $e');
       return false;
     }
   }
@@ -154,13 +160,13 @@ class AuthService {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove('auth_token');
       await prefs.remove('username');
-      print('🚫 Token and username removed');
+      print('🚫 Token and username removed from SharedPreferences');
     } catch (e) {
       print('❌ Error removing credentials: $e');
     }
   }
 
-  // ✅ Is Logged In
+  // ✅ Check if Logged In
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;

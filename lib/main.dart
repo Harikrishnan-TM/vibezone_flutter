@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:uni_links/uni_links.dart';
 import 'package:vibezone_flutter/services/auth_service.dart';
+import 'package:vibezone_flutter/services/socket_service.dart';
 import 'package:vibezone_flutter/screens/login_screen.dart';
 import 'package:vibezone_flutter/screens/signup_screen.dart';
 import 'package:vibezone_flutter/screens/home_screen.dart';
 import 'package:vibezone_flutter/screens/profile_screen.dart';
 import 'package:vibezone_flutter/screens/call_screen.dart';
 import 'package:vibezone_flutter/screens/buy_coins_screen.dart';
-import 'package:vibezone_flutter/services/socket_service.dart';
+import 'package:vibezone_flutter/screens/coin_purchase_page.dart';
 import 'package:vibezone_flutter/screens/win_money_page.dart';
 import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
-import 'package:vibezone_flutter/main_container.dart';
 import 'package:vibezone_flutter/screens/kyc_screen.dart';
-import 'package:vibezone_flutter/screens/coin_purchase_page.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:vibezone_flutter/main_container.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,8 +42,6 @@ class VibezoneApp extends StatefulWidget {
 }
 
 class _VibezoneAppState extends State<VibezoneApp> {
-  late String _deepLinkMessage = "Waiting for deep link...";
-
   @override
   void initState() {
     super.initState();
@@ -55,76 +53,36 @@ class _VibezoneAppState extends State<VibezoneApp> {
     try {
       final link = await getInitialLink();
       if (link != null) {
-        _handleDeepLink(link);
+        _routeToDeepLinkTarget(link);
       }
     } catch (e) {
       debugPrint("❌ Error retrieving initial link: $e");
     }
   }
 
-  Future<void> _initUniLinks() async {
-    try {
-      linkStream.listen((String? link) {
-        if (link != null) {
-          _handleDeepLink(link);
-        }
-      });
-    } catch (e) {
-      debugPrint("Error listening to deep links: $e");
-    }
+  void _initUniLinks() {
+    linkStream.listen((String? link) {
+      if (link != null) {
+        _routeToDeepLinkTarget(link);
+      }
+    }, onError: (err) {
+      debugPrint("❌ Deep link stream error: $err");
+    });
   }
 
-  void _handleDeepLink(String link) {
+  void _routeToDeepLinkTarget(String link) {
     try {
       final uri = Uri.parse(link);
 
       if (uri.scheme == "myapp" && uri.host == "payment-success") {
-        final paymentId = uri.queryParameters['payment_id'];
-        final orderId = uri.queryParameters['order_id'];
-        final signature = uri.queryParameters['signature'];
-        final amount = uri.queryParameters['amount'];
-
-        if (paymentId != null &&
-            orderId != null &&
-            signature != null &&
-            amount != null) {
-          _confirmPayment(paymentId, orderId, signature, amount);
-        } else {
-          debugPrint("❌ Missing parameters in deep link.");
-        }
-      }
-    } catch (e) {
-      debugPrint("❌ Error parsing deep link: $e");
-    }
-  }
-
-  Future<void> _confirmPayment(
-    String paymentId,
-    String orderId,
-    String signature,
-    String amount,
-  ) async {
-    try {
-      final success = await AuthService.confirmPayment(
-        paymentId: paymentId,
-        orderId: orderId,
-        signature: signature,
-        amount: amount,
-      );
-      if (success) {
-        setState(() {
-          _deepLinkMessage = "✅ Payment successful. Redirecting...";
-        });
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        setState(() {
-          _deepLinkMessage = "❌ Payment failed. Please try again.";
+        // Let CoinPurchasePage handle this deep link as it already does
+        // Optionally navigate to CoinPurchasePage if not already there
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushNamed(context, '/buy-coins');
         });
       }
     } catch (e) {
-      setState(() {
-        _deepLinkMessage = "❌ Error confirming payment: $e";
-      });
+      debugPrint("❌ Error routing deep link: $e");
     }
   }
 
@@ -168,11 +126,6 @@ class _VibezoneAppState extends State<VibezoneApp> {
         },
         '/kyc': (context) => const KycScreen(),
       },
-      home: Scaffold(
-        body: Center(
-          child: Text(_deepLinkMessage),
-        ),
-      ),
     );
   }
 }

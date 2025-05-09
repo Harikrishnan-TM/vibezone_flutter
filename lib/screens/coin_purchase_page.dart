@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:uni_links/uni_links.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
@@ -48,12 +48,15 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
 
   void _listenToDeepLinks() {
     _sub = uriLinkStream.listen((Uri? uri) async {
+      debugPrint('[uni_links] Received deep link: $uri');
       if (uri != null &&
           uri.scheme == 'myapp' &&
           uri.host == 'payment-success') {
         final paymentId = uri.queryParameters['payment_id'];
         final orderId = uri.queryParameters['order_id'];
         final signature = uri.queryParameters['signature'];
+
+        debugPrint('[uni_links] payment_id=$paymentId, order_id=$orderId, signature=$signature');
 
         final username = await AuthService.getUsername();
         if (paymentId != null && orderId != null && signature != null && username != null) {
@@ -64,41 +67,64 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
             amount: _lastAmount,
             username: username,
           );
+        } else {
+          debugPrint('[uni_links] Missing one or more required parameters.');
         }
       }
     }, onError: (err) {
-      debugPrint('Deep link error: $err');
+      debugPrint('[uni_links] Deep link error: $err');
     });
   }
 
   Future<void> startWebsitePayment(int amount) async {
     _lastAmount = amount;
+    debugPrint('[startWebsitePayment] Starting payment for amount: $amount');
 
     final url = Uri.parse("https://vibezone-backend.fly.dev/create-order/");
-    final response = await http.post(
-      url,
-      body: jsonEncode({"amount": amount}),
-      headers: {"Content-Type": "application/json"},
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      final Uri paymentUrl = Uri.parse(
-        'https://techno-official.github.io/vibezone-payment-page/checkout.html'
-        '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}'
+    try {
+      final response = await http.post(
+        url,
+        body: jsonEncode({"amount": amount}),
+        headers: {"Content-Type": "application/json"},
       );
 
-      if (await canLaunchUrl(paymentUrl)) {
-        await launchUrl(paymentUrl, mode: LaunchMode.externalApplication);
+      debugPrint('[startWebsitePayment] Response: ${response.statusCode} ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        final Uri paymentUrl = Uri.parse(
+          'https://techno-official.github.io/vibezone-payment-page/checkout.html'
+          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}'
+        );
+
+        debugPrint('[startWebsitePayment] Launching payment URL: $paymentUrl');
+
+        await launch(
+          paymentUrl.toString(),
+          customTabsOption: CustomTabsOption(
+            toolbarColor: Theme.of(context).primaryColor,
+            enableDefaultShare: true,
+            enableUrlBarHiding: true,
+            showPageTitle: true,
+            animation: CustomTabsAnimation.slideIn(),
+          ),
+          safariVCOption: SafariViewControllerOption(
+            preferredBarTintColor: Theme.of(context).primaryColor,
+            preferredControlTintColor: Colors.white,
+            barCollapsingEnabled: true,
+          ),
+        );
       } else {
+        debugPrint('[startWebsitePayment] Failed to create Razorpay order');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not launch payment URL")),
+          const SnackBar(content: Text("Failed to create Razorpay order")),
         );
       }
-    } else {
+    } catch (e) {
+      debugPrint('[startWebsitePayment] Exception during payment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to create Razorpay order")),
+        const SnackBar(content: Text("Could not launch payment URL")),
       );
     }
   }
@@ -110,6 +136,7 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
     required int amount,
     required String username,
   }) async {
+    debugPrint('[confirmPaymentOnBackend] Confirming payment on backend...');
     final url = Uri.parse("https://vibezone-backend.fly.dev/confirm-payment/");
     final response = await http.post(
       url,
@@ -123,13 +150,15 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
       }),
     );
 
+    debugPrint('[confirmPaymentOnBackend] Response: ${response.statusCode} ${response.body}');
+
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Coins added successfully!")),
       );
-      widget.onCoinsUpdated?.call(); // Notify parent to refresh coins
+      widget.onCoinsUpdated?.call();
       if (mounted) {
-        Navigator.pop(context); // Close this page after successful payment
+        Navigator.pop(context);
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -140,6 +169,7 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
 
   void handleCoinTap(Map<String, dynamic> coinData) {
     final amount = coinData['price'];
+    debugPrint('[handleCoinTap] User tapped coin box for ₹$amount');
     if (isWebsiteSelected) {
       startWebsitePayment(amount);
     } else {
