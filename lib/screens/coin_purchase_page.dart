@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:uni_links/uni_links.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:async';
 import '../services/auth_service.dart';
 
@@ -92,29 +92,20 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final username = await AuthService.getUsername();
 
         final Uri paymentUrl = Uri.parse(
           'https://techno-official.github.io/vibezone-payment-page/checkout.html'
-          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}'
+          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}&username=$username'
         );
 
         debugPrint('[startWebsitePayment] Launching payment URL: $paymentUrl');
 
-        await launch(
-          paymentUrl.toString(),
-          customTabsOption: CustomTabsOption(
-            toolbarColor: Theme.of(context).primaryColor,
-            enableDefaultShare: true,
-            enableUrlBarHiding: true,
-            showPageTitle: true,
-            animation: CustomTabsAnimation.slideIn(),
-          ),
-          safariVCOption: SafariViewControllerOption(
-            preferredBarTintColor: Theme.of(context).primaryColor,
-            preferredControlTintColor: Colors.white,
-            barCollapsingEnabled: true,
-          ),
-        );
+        if (await canLaunchUrl(paymentUrl)) {
+          await launchUrl(paymentUrl, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch $paymentUrl';
+        }
       } else {
         debugPrint('[startWebsitePayment] Failed to create Razorpay order');
         ScaffoldMessenger.of(context).showSnackBar(
