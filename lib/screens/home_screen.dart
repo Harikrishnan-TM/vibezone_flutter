@@ -83,6 +83,11 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// ✅ Public method for external access via GlobalKey
+  void refreshWalletCoins() {
+    _loadWalletCoins();
+  }
+
   void _connectWebSocket() {
     _socketService = SocketService.getInstance();
 

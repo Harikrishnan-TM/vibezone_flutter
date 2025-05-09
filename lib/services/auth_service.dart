@@ -64,13 +64,13 @@ class AuthService {
     }
   }
 
-  // ✅ Confirm Payment
-  static Future<bool> confirmPayment(
-    String paymentId,
-    String orderId,
-    String signature,
-    String amount,
-  ) async {
+  // ✅ Confirm Payment (refactored with named parameters)
+  static Future<bool> confirmPayment({
+    required String paymentId,
+    required String orderId,
+    required String signature,
+    required String amount,
+  }) async {
     try {
       final token = await getToken();
       final username = await getUsername();

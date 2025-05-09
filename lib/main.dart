@@ -13,7 +13,7 @@ import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
 import 'package:vibezone_flutter/main_container.dart';
 import 'package:vibezone_flutter/screens/kyc_screen.dart';
 import 'package:vibezone_flutter/screens/coin_purchase_page.dart';
-import 'package:uni_links/uni_links.dart';  // Import uni_links package
+import 'package:uni_links/uni_links.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,16 +78,19 @@ class _VibezoneAppState extends State<VibezoneApp> {
     try {
       final uri = Uri.parse(link);
 
-      if (uri.host == "vibezone-backend.fly.dev" &&
-          uri.path == "/confirm-web-payment") {
+      if (uri.scheme == "myapp" && uri.host == "payment-success") {
         final paymentId = uri.queryParameters['payment_id'];
         final orderId = uri.queryParameters['order_id'];
         final signature = uri.queryParameters['signature'];
+        final amount = uri.queryParameters['amount'];
 
-        if (paymentId != null && orderId != null && signature != null) {
-          _confirmPayment(paymentId, orderId, signature);
+        if (paymentId != null &&
+            orderId != null &&
+            signature != null &&
+            amount != null) {
+          _confirmPayment(paymentId, orderId, signature, amount);
         } else {
-          debugPrint("❌ Missing payment params in deep link.");
+          debugPrint("❌ Missing parameters in deep link.");
         }
       }
     } catch (e) {
@@ -95,9 +98,19 @@ class _VibezoneAppState extends State<VibezoneApp> {
     }
   }
 
-  Future<void> _confirmPayment(String paymentId, String orderId, String signature) async {
+  Future<void> _confirmPayment(
+    String paymentId,
+    String orderId,
+    String signature,
+    String amount,
+  ) async {
     try {
-      final success = await AuthService.confirmPayment(paymentId, orderId, signature);
+      final success = await AuthService.confirmPayment(
+        paymentId: paymentId,
+        orderId: orderId,
+        signature: signature,
+        amount: amount,
+      );
       if (success) {
         setState(() {
           _deepLinkMessage = "✅ Payment successful. Redirecting...";
@@ -147,7 +160,8 @@ class _VibezoneAppState extends State<VibezoneApp> {
         '/withdraw-status': (context) => const WithdrawStatusScreen(),
         '/buy-coins': (context) => const CoinPurchasePage(),
         '/win-money': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments
+              as Map<String, dynamic>;
           return WinMoneyPage(
             initialEarningCoins: args['initialEarningCoins'] ?? 0,
           );
