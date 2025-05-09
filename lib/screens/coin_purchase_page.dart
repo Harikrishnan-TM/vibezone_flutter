@@ -104,7 +104,10 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
         if (await canLaunchUrl(paymentUrl)) {
           await launchUrl(paymentUrl, mode: LaunchMode.externalApplication);
         } else {
-          throw 'Could not launch $paymentUrl';
+          debugPrint('[startWebsitePayment] Could not launch payment URL');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Could not launch payment URL")),
+          );
         }
       } else {
         debugPrint('[startWebsitePayment] Failed to create Razorpay order');
