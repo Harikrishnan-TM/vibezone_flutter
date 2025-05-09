@@ -1,9 +1,9 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:uni_links/uni_links.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:async';
+import 'package:url_launcher/url_launcher_string.dart';
 import '../services/auth_service.dart';
 
 class CoinPurchasePage extends StatefulWidget {
@@ -94,17 +94,31 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
         final data = jsonDecode(response.body);
         final username = await AuthService.getUsername();
 
+        if (username == null) {
+          debugPrint('[startWebsitePayment] Username is null');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("User not logged in")),
+          );
+          return;
+        }
+
         final Uri paymentUrl = Uri.parse(
           'https://techno-official.github.io/vibezone-payment-page/checkout.html'
-          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}&username=$username'
+          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}&username=$username',
         );
 
-        debugPrint('[startWebsitePayment] Launching payment URL: $paymentUrl');
+        debugPrint('[startWebsitePayment] Final payment URL: $paymentUrl');
 
-        if (await canLaunchUrl(paymentUrl)) {
-          await launchUrl(paymentUrl, mode: LaunchMode.externalApplication);
-        } else {
-          debugPrint('[startWebsitePayment] Could not launch payment URL');
+        try {
+          final launched = await launchUrlString(
+            paymentUrl.toString(),
+            mode: LaunchMode.externalApplication,
+          );
+          if (!launched) {
+            throw 'launchUrlString returned false';
+          }
+        } catch (e) {
+          debugPrint('[startWebsitePayment] Failed to launch URL: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Could not launch payment URL")),
           );
