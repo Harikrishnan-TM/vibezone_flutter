@@ -66,7 +66,7 @@ class AuthService {
     }
   }
 
-  // ✅ Confirm Payment (with debugging)
+  // ✅ Confirm Payment (no token required anymore)
   static Future<bool> confirmPayment({
     required String paymentId,
     required String orderId,
@@ -74,17 +74,15 @@ class AuthService {
     required String amount,
   }) async {
     try {
-      final token = await getToken();
       final username = await getUsername();
 
-      if (token == null || username == null) {
-        print('❌ Token or username is null, cannot confirm payment.');
+      if (username == null) {
+        print('❌ Username is null, cannot confirm payment.');
         return false;
       }
 
       final Map<String, String> headers = {
         'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
       };
 
       final Map<String, dynamic> payload = {
@@ -96,7 +94,7 @@ class AuthService {
       };
 
       print('📦 Sending confirm-payment request...');
-      print('🔐 Token: $token');
+      print('👤 Username: $username');
       print('🧾 Headers: $headers');
       print('📤 Payload: $payload');
 
