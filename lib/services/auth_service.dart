@@ -7,7 +7,7 @@ class AuthService {
   final String _loginUrl = 'https://vibezone-backend.fly.dev/api/login/';
   final String _signupUrl = 'https://vibezone-backend.fly.dev/api/signup/';
   static const String _confirmPaymentUrl =
-      'https://vibezone-backend.fly.dev/api/confirm-payment/';
+      'https://vibezone-backend.fly.dev/confirm-payment/';
 
   // 🔐 Login User
   Future<String> loginUser(String username, String password) async {
