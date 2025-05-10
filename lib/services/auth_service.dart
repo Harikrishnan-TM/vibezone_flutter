@@ -66,7 +66,7 @@ class AuthService {
     }
   }
 
-  // ✅ Confirm Payment (refactored for clarity and debugging)
+  // ✅ Confirm Payment (with debugging)
   static Future<bool> confirmPayment({
     required String paymentId,
     required String orderId,
@@ -82,20 +82,31 @@ class AuthService {
         return false;
       }
 
+      final Map<String, String> headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token',
+      };
+
+      final Map<String, dynamic> payload = {
+        'payment_id': paymentId,
+        'order_id': orderId,
+        'signature': signature,
+        'amount': amount,
+        'username': username,
+      };
+
+      print('📦 Sending confirm-payment request...');
+      print('🔐 Token: $token');
+      print('🧾 Headers: $headers');
+      print('📤 Payload: $payload');
+
       final response = await http.post(
         Uri.parse(_confirmPaymentUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Token $token',
-        },
-        body: jsonEncode({
-          'payment_id': paymentId,
-          'order_id': orderId,
-          'signature': signature,
-          'amount': amount,
-          'username': username,
-        }),
+        headers: headers,
+        body: jsonEncode(payload),
       );
+
+      print('📬 Response (${response.statusCode}): ${response.body}');
 
       if (response.statusCode == 200) {
         print('✅ Payment confirmation successful');
