@@ -102,9 +102,18 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
           return;
         }
 
+        final String key = data['key'] ?? '';
+        if (key.isEmpty) {
+          debugPrint('[startWebsitePayment] Razorpay key missing in response');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Payment error: missing Razorpay key")),
+          );
+          return;
+        }
+
         final Uri paymentUrl = Uri.parse(
           'https://techno-official.github.io/vibezone-payment-page/checkout.html'
-          '?order_id=${data['id']}&amount=${data['amount']}&key=${data['key']}&username=$username',
+          '?order_id=${data['id']}&amount=${data['amount']}&key=$key&username=$username',
         );
 
         debugPrint('[startWebsitePayment] Final payment URL: $paymentUrl');
