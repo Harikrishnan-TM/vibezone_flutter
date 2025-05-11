@@ -175,7 +175,7 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
       );
       widget.onCoinsUpdated?.call();
       if (mounted) {
-        Navigator.pop(context, true); // ✅ Return `true` to notify parent
+        Navigator.pop(context, true);
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -235,7 +235,8 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('${data["coins"]} Coins', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text('${data["coins"]} Coins',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 10),
                           Text('₹${data["price"]}', style: const TextStyle(fontSize: 16)),
                         ],
