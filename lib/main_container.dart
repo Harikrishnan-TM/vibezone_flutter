@@ -8,10 +8,10 @@ class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
 
   @override
-  State<MainContainer> createState() => _MainContainerState();
+  State<MainContainer> createState() => MainContainerState();
 }
 
-class _MainContainerState extends State<MainContainer> {
+class MainContainerState extends State<MainContainer> {
   int _currentIndex = 0;
 
   // To allow rebuilding HomeScreen when coin purchase completes
@@ -32,6 +32,11 @@ class _MainContainerState extends State<MainContainer> {
     } else {
       setState(() => _currentIndex = index);
     }
+  }
+
+  // ✅ Add this so main.dart can trigger wallet refresh after Razorpay
+  void refreshWallet() {
+    _homeKey.currentState?.refreshWalletCoins();
   }
 
   @override

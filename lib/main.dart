@@ -42,6 +42,8 @@ class VibezoneApp extends StatefulWidget {
 }
 
 class _VibezoneAppState extends State<VibezoneApp> {
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -75,10 +77,8 @@ class _VibezoneAppState extends State<VibezoneApp> {
       final uri = Uri.parse(link);
 
       if (uri.scheme == "myapp" && uri.host == "payment-success") {
-        // Let CoinPurchasePage handle this deep link as it already does
-        // Optionally navigate to CoinPurchasePage if not already there
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Navigator.pushNamed(context, '/buy-coins');
+          _navigatorKey.currentState?.pushNamed('/buy-coins');
         });
       }
     } catch (e) {
@@ -89,6 +89,7 @@ class _VibezoneAppState extends State<VibezoneApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Vibezone',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -116,10 +117,14 @@ class _VibezoneAppState extends State<VibezoneApp> {
         '/home': (context) => const MainContainer(),
         '/profile': (context) => const ProfileScreen(),
         '/withdraw-status': (context) => const WithdrawStatusScreen(),
-        '/buy-coins': (context) => const CoinPurchasePage(),
+        '/buy-coins': (context) => CoinPurchasePage(
+          onCoinsUpdated: () {
+            final mainContainerState = context.findAncestorStateOfType<MainContainerState>();
+            mainContainerState?.refreshWallet(); // Implement this in MainContainer
+          },
+        ),
         '/win-money': (context) {
-          final args = ModalRoute.of(context)!.settings.arguments
-              as Map<String, dynamic>;
+          final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
           return WinMoneyPage(
             initialEarningCoins: args['initialEarningCoins'] ?? 0,
           );
