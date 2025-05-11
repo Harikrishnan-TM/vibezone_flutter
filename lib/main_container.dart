@@ -28,7 +28,8 @@ class MainContainerState extends State<MainContainer> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!); // 👀 Subscribed
+    //routeObserver.subscribe(this, ModalRoute.of(context)!); // 👀 Subscribed
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute<dynamic>);
   }
 
   @override
