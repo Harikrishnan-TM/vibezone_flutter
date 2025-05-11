@@ -43,7 +43,8 @@ class HomeScreenState extends State<HomeScreen>
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Subscribe to route changes
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
+    //routeObserver.subscribe(this, ModalRoute.of(context)!);
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute<dynamic>);
   }
 
   @override
