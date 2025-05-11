@@ -30,6 +30,7 @@ class _HomeContentState extends State<HomeContent> {
     final token = await AuthService.getToken();
     if (token != null && token.isNotEmpty) {
       try {
+        // Refresh online users
         final response = await http.get(
           Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
           headers: {'Authorization': 'Token $token'},
@@ -41,8 +42,12 @@ class _HomeContentState extends State<HomeContent> {
         } else {
           debugPrint("❌ Failed to fetch users: ${response.statusCode}");
         }
+
+        // Refresh wallet balance
+        widget.onRefreshWallet(); // Refresh wallet balance by calling the provided callback
+
       } catch (e) {
-        debugPrint("⚠️ Error fetching users: $e");
+        debugPrint("⚠️ Error fetching users or wallet balance: $e");
       }
     }
   }

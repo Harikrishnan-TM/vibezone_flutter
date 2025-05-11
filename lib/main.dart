@@ -15,6 +15,9 @@ import 'package:vibezone_flutter/screens/withdraw_status_screen.dart';
 import 'package:vibezone_flutter/screens/kyc_screen.dart';
 import 'package:vibezone_flutter/main_container.dart';
 
+/// Global Route Observer for tracking screen transitions
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -90,6 +93,7 @@ class _VibezoneAppState extends State<VibezoneApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: _navigatorKey,
+      navigatorObservers: [routeObserver], // ✅ Inject RouteObserver
       title: 'Vibezone',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -120,7 +124,7 @@ class _VibezoneAppState extends State<VibezoneApp> {
         '/buy-coins': (context) => CoinPurchasePage(
           onCoinsUpdated: () {
             final mainContainerState = context.findAncestorStateOfType<MainContainerState>();
-            mainContainerState?.refreshWallet(); // Implement this in MainContainer
+            mainContainerState?.refreshWallet(); // 🔄 Make sure this exists
           },
         ),
         '/win-money': (context) {

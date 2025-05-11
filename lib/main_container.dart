@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'services/auth_service.dart'; // ✅ Correct relative import
+import 'services/auth_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/coin_purchase_page.dart';
 import 'screens/recents_page.dart';
 import 'screens/more_page.dart';
+import 'main.dart'; // To access the routeObserver from main.dart
 
 class MainContainer extends StatefulWidget {
   const MainContainer({super.key});
@@ -12,22 +13,36 @@ class MainContainer extends StatefulWidget {
   State<MainContainer> createState() => MainContainerState();
 }
 
-class MainContainerState extends State<MainContainer> {
+class MainContainerState extends State<MainContainer> with RouteAware {
   int _currentIndex = 0;
 
-  // To allow rebuilding HomeScreen when coin purchase completes
   final GlobalKey<HomeScreenState> _homeKey = GlobalKey();
-
-  // For storing wallet balance
   double? _walletBalance;
 
   @override
   void initState() {
     super.initState();
-    fetchWalletBalance(); // Fetch wallet balance when the app starts
+    fetchWalletBalance();
   }
 
-  // Fetch wallet balance using AuthService
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!); // 👀 Subscribed
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this); // ❌ Unsubscribed
+    super.dispose();
+  }
+
+  // 👇 Called when coming back from another screen (e.g., Coin Purchase)
+  @override
+  void didPopNext() {
+    refreshWallet(); // Refresh wallet when returning
+  }
+
   Future<void> fetchWalletBalance() async {
     try {
       final balanceData = await AuthService.fetchWalletBalance();
@@ -39,22 +54,19 @@ class MainContainerState extends State<MainContainer> {
     }
   }
 
-  // Method to refresh wallet after coin purchase
   void refreshWallet() {
-    fetchWalletBalance(); // Re-fetch wallet balance after an update (purchase)
-    _homeKey.currentState?.refreshWalletCoins(); // Refresh HomeScreen if needed
+    fetchWalletBalance();
+    _homeKey.currentState?.refreshWalletCoins();
   }
 
-  // Tab selection handling
   void _onTabTapped(int index) async {
     if (index == 1) {
-      // Navigate to CoinPurchasePage
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => CoinPurchasePage(
             onCoinsUpdated: () {
-              Navigator.pop(context, true); // Return true if coins were updated
+              Navigator.pop(context, true);
             },
           ),
         ),
@@ -71,8 +83,8 @@ class MainContainerState extends State<MainContainer> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      HomeScreen(key: _homeKey, walletBalance: _walletBalance ?? 0.0), // ✅ Pass wallet balance
-      const SizedBox.shrink(), // Placeholder for Buy tab
+      HomeScreen(key: _homeKey, walletBalance: _walletBalance ?? 0.0),
+      const SizedBox.shrink(), // Placeholder for Buy
       const RecentsPage(),
       const MorePage(),
     ];

@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import 'call_screen.dart';
 import 'HomeContent.dart';
 import 'package:http/http.dart' as http;
+import '../main.dart'; // Make sure this imports the file where `routeObserver` is declared.
 
 class HomeScreen extends StatefulWidget {
   final double? walletBalance;
@@ -19,7 +20,8 @@ class HomeScreen extends StatefulWidget {
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver, RouteAware {
   List<dynamic> onlineUsers = [];
   bool incomingCall = false;
   int walletCoins = 0;
@@ -30,7 +32,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    walletBalance = widget.walletBalance; // ✅ Use value passed from constructor, if any
+    walletBalance = widget.walletBalance;
     _checkAndLoadUsers();
     _loadWalletCoins();
     _loadWalletBalance();
@@ -38,10 +40,25 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Subscribe to route changes
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    routeObserver.unsubscribe(this);
     _socketService.disconnect();
     super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Called when user navigates back to this screen
+    _loadWalletCoins();
+    _loadWalletBalance();
   }
 
   @override
@@ -94,10 +111,9 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _loadWalletBalance() async {
     try {
-      final balanceData = await ApiService.fetchWalletBalance(); // ✅ Corrected
+      final balanceData = await ApiService.fetchWalletBalance();
       if (mounted) {
         setState(() {
-          //walletBalance = balanceData['balance'];
           walletBalance = balanceData;
         });
       }
