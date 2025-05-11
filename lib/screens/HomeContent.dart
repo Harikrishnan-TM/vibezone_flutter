@@ -9,6 +9,7 @@ class HomeContent extends StatefulWidget {
   final Function(String) onCall;
   final int walletCoins;
   final VoidCallback onRefreshWallet;
+  final double? walletBalance; // Added wallet balance parameter
 
   const HomeContent({
     Key? key,
@@ -17,6 +18,7 @@ class HomeContent extends StatefulWidget {
     required this.onCall,
     required this.walletCoins,
     required this.onRefreshWallet,
+    this.walletBalance, // Accept wallet balance as parameter
   }) : super(key: key);
 
   @override
@@ -55,13 +57,19 @@ class _HomeContentState extends State<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row (coins, buttons)
+            // Header row (coins, wallet balance, buttons)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     const Text('👦'),
+                    const SizedBox(width: 8),
+                    if (widget.walletBalance != null)
+                      Text(
+                        '₹${widget.walletBalance?.toStringAsFixed(2) ?? '0.00'}', // Display wallet balance
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                     const SizedBox(width: 8),
                     Text('🪙 ${widget.walletCoins}'),
                     const SizedBox(width: 8),

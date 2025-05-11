@@ -8,6 +8,8 @@ class AuthService {
   final String _signupUrl = 'https://vibezone-backend.fly.dev/api/signup/';
   static const String _confirmPaymentUrl =
       'https://vibezone-backend.fly.dev/confirm-payment/';
+  static const String _walletBalanceUrl =
+      'https://vibezone-backend.fly.dev/api/get-wallet-balance/';
 
   // 🔐 Login User
   Future<String> loginUser(String username, String password) async {
@@ -116,6 +118,40 @@ class AuthService {
     } catch (e) {
       print('❌ Exception during payment confirmation: $e');
       return false;
+    }
+  }
+
+  // 💰 ✅ NEW METHOD: Fetch Wallet Balance directly from API (for Home screen, etc.)
+  static Future<Map<String, dynamic>?> fetchWalletBalance() async {
+    final token = await getToken();
+
+    if (token == null) {
+      print('❌ Cannot fetch wallet: No token found.');
+      return null;
+    }
+
+    final Uri url = Uri.parse(_walletBalanceUrl);
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> json = jsonDecode(response.body);
+        print('✅ Wallet fetched: ${json['data']}');
+        return json['data']; // Contains 'balance', 'earnings_coins', 'is_in_call'
+      } else {
+        print('❌ Failed to fetch wallet balance: ${response.statusCode}, ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('⚠️ Error fetching wallet balance: $e');
+      return null;
     }
   }
 
