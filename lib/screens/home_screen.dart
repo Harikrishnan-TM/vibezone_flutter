@@ -97,7 +97,8 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final balanceData = await ApiService.fetchWalletBalance(); // ✅ Corrected
       if (mounted) {
         setState(() {
-          walletBalance = balanceData['balance'];
+          //walletBalance = balanceData['balance'];
+          walletBalance = balanceData;
         });
       }
     } catch (e) {
