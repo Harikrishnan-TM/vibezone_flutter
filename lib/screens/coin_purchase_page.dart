@@ -175,7 +175,7 @@ class _CoinPurchasePageState extends State<CoinPurchasePage> {
       );
       widget.onCoinsUpdated?.call();
       if (mounted) {
-        Navigator.pop(context);
+        Navigator.pop(context, true); // ✅ Return `true` to notify parent
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
