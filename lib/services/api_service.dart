@@ -382,6 +382,34 @@ class ApiService {
     }
   }
 
+  // ✅ Set User in_call_with Status
+  static Future<void> setUserInCallWith(String username) async {
+    final String? token = await AuthService.getToken();
+    if (token == null) {
+      debugPrint('❌ No auth token found for setting in_call_with');
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/set-in-call-with/'),
+        headers: {
+          'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'in_call_with': username}),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint('⚠️ Failed to update in_call_with: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error setting in_call_with: $e');
+    }
+  }
+
+
+
   // 🔵 Fetch Wallet Balance (New Method)
   static Future<double?> fetchWalletBalance() async {
     final String? token = await AuthService.getToken();

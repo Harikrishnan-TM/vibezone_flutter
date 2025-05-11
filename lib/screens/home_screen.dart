@@ -8,7 +8,12 @@ import 'HomeContent.dart';
 import 'package:http/http.dart' as http;
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  final double? walletBalance;
+
+  const HomeScreen({
+    Key? key,
+    this.walletBalance,
+  }) : super(key: key);
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -25,6 +30,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    walletBalance = widget.walletBalance; // ✅ Use value passed from constructor, if any
     _checkAndLoadUsers();
     _loadWalletCoins();
     _loadWalletBalance();
@@ -88,7 +94,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _loadWalletBalance() async {
     try {
-      final balanceData = await AuthService.getWalletBalance();
+      final balanceData = await ApiService.fetchWalletBalance(); // ✅ Corrected
       if (mounted) {
         setState(() {
           walletBalance = balanceData['balance'];
@@ -99,7 +105,6 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  /// ✅ Public method for external access via GlobalKey
   void refreshWalletCoins() {
     _loadWalletCoins();
     _loadWalletBalance();
