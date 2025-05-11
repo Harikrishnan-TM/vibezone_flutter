@@ -9,7 +9,7 @@ class HomeContent extends StatefulWidget {
   final Function(String) onCall;
   final int walletCoins;
   final VoidCallback onRefreshWallet;
-  final double? walletBalance; // Added wallet balance parameter
+  final double? walletBalance; // Wallet balance passed in
 
   const HomeContent({
     Key? key,
@@ -18,7 +18,7 @@ class HomeContent extends StatefulWidget {
     required this.onCall,
     required this.walletCoins,
     required this.onRefreshWallet,
-    this.walletBalance, // Accept wallet balance as parameter
+    this.walletBalance,
   }) : super(key: key);
 
   @override
@@ -43,7 +43,7 @@ class _HomeContentState extends State<HomeContent> {
   Future<void> _navigateToBuyCoins() async {
     final result = await Navigator.pushNamed(context, '/buy-coins');
     if (result == true) {
-      widget.onRefreshWallet(); // Refresh wallet coins if coins were bought
+      widget.onRefreshWallet(); // Refresh wallet if coins were bought
     }
   }
 
@@ -57,28 +57,30 @@ class _HomeContentState extends State<HomeContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row (coins, wallet balance, buttons)
+            // Wallet & Coins Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Text('👦'),
-                    const SizedBox(width: 8),
-                    if (widget.walletBalance != null)
-                      Text(
-                        '₹${widget.walletBalance?.toStringAsFixed(2) ?? '0.00'}', // Display wallet balance
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Expanded(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 10,
+                    runSpacing: 8,
+                    children: [
+                      const Text('👦'),
+                      if (widget.walletBalance != null)
+                        Text(
+                          '₹${widget.walletBalance!.toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      Text('🪙 ${widget.walletCoins}'),
+                      ElevatedButton(
+                        onPressed: _navigateToBuyCoins,
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                        child: const Text('Buy Coins'),
                       ),
-                    const SizedBox(width: 8),
-                    Text('🪙 ${widget.walletCoins}'),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: _navigateToBuyCoins,
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                      child: const Text('Buy Coins'),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/profile'),
@@ -87,9 +89,14 @@ class _HomeContentState extends State<HomeContent> {
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
-            const Text("Online Users 💬", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text(
+              "Online Users 💬",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
+
             SizedBox(
               height: 160,
               child: widget.onlineUsers.isEmpty

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:vibezone_app/services/auth_service.dart'; // ✅ Make sure to import AuthService
+import 'services/auth_service.dart'; // ✅ Correct relative import
 import 'screens/home_screen.dart';
-import 'screens/coin_purchase_page.dart'; // ✅ Correct import
+import 'screens/coin_purchase_page.dart';
 import 'screens/recents_page.dart';
 import 'screens/more_page.dart';
 
@@ -27,18 +27,22 @@ class MainContainerState extends State<MainContainer> {
     fetchWalletBalance(); // Fetch wallet balance when the app starts
   }
 
-  // Fetch wallet balance using the new method from AuthService
+  // Fetch wallet balance using AuthService
   Future<void> fetchWalletBalance() async {
-    final balanceData = await AuthService.getWalletBalance();
-    setState(() {
-      _walletBalance = balanceData['balance'];
-    });
+    try {
+      final balanceData = await AuthService.getWalletBalance();
+      setState(() {
+        _walletBalance = balanceData['balance']?.toDouble() ?? 0.0;
+      });
+    } catch (e) {
+      debugPrint("Error fetching wallet balance: $e");
+    }
   }
 
   // Method to refresh wallet after coin purchase
   void refreshWallet() {
     fetchWalletBalance(); // Re-fetch wallet balance after an update (purchase)
-    _homeKey.currentState?.refreshWalletCoins(); // Refresh coins on HomeScreen
+    _homeKey.currentState?.refreshWalletCoins(); // Refresh HomeScreen if needed
   }
 
   // Tab selection handling
@@ -50,14 +54,13 @@ class MainContainerState extends State<MainContainer> {
         MaterialPageRoute(
           builder: (context) => CoinPurchasePage(
             onCoinsUpdated: () {
-              Navigator.pop(context, true); // Return true after coins updated
+              Navigator.pop(context, true); // Return true if coins were updated
             },
           ),
         ),
       );
 
       if (result == true) {
-        // Refresh wallet coins if purchase was successful
         refreshWallet();
       }
     } else {
@@ -68,7 +71,7 @@ class MainContainerState extends State<MainContainer> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      HomeScreen(key: _homeKey, walletBalance: _walletBalance), // Pass wallet balance to HomeScreen
+      HomeScreen(key: _homeKey, walletBalance: _walletBalance ?? 0.0), // ✅ Pass wallet balance
       const SizedBox.shrink(), // Placeholder for Buy tab
       const RecentsPage(),
       const MorePage(),
@@ -78,11 +81,15 @@ class MainContainerState extends State<MainContainer> {
       appBar: AppBar(
         title: const Text('VibeZone'),
         actions: [
-          // You can display the wallet balance on the app bar if needed
           if (_walletBalance != null)
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('₹${_walletBalance?.toStringAsFixed(2) ?? '0.00'}'),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: Text(
+                  '₹${_walletBalance!.toStringAsFixed(2)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
         ],
       ),

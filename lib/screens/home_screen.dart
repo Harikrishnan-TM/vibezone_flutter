@@ -18,6 +18,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<dynamic> onlineUsers = [];
   bool incomingCall = false;
   int walletCoins = 0;
+  double? walletBalance;
   late SocketService _socketService;
 
   @override
@@ -26,6 +27,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _checkAndLoadUsers();
     _loadWalletCoins();
+    _loadWalletBalance();
     _connectWebSocket();
   }
 
@@ -40,6 +42,7 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _loadWalletCoins();
+      _loadWalletBalance();
     }
   }
 
@@ -83,9 +86,23 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _loadWalletBalance() async {
+    try {
+      final balanceData = await AuthService.getWalletBalance();
+      if (mounted) {
+        setState(() {
+          walletBalance = balanceData['balance'];
+        });
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading wallet balance: $e');
+    }
+  }
+
   /// ✅ Public method for external access via GlobalKey
   void refreshWalletCoins() {
     _loadWalletCoins();
+    _loadWalletBalance();
   }
 
   void _connectWebSocket() {
@@ -186,13 +203,14 @@ class HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           HomeContent(
             onlineUsers: onlineUsers,
             walletCoins: walletCoins,
+            walletBalance: walletBalance,
             onUsersUpdated: (newUsers) {
               setState(() {
                 onlineUsers = newUsers;
               });
             },
             onCall: _initiateCall,
-            onRefreshWallet: _loadWalletCoins,
+            onRefreshWallet: refreshWalletCoins,
           ),
           if (incomingCall)
             Container(
