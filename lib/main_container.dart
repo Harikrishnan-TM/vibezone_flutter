@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
-import 'screens/buy_coins_screen.dart';
+import 'screens/coin_purchase_page.dart'; // ✅ Correct import
 import 'screens/recents_page.dart';
 import 'screens/more_page.dart';
 
@@ -19,14 +19,20 @@ class MainContainerState extends State<MainContainer> {
 
   void _onTabTapped(int index) async {
     if (index == 1) {
-      // Navigate to Buy Coins page and await result
+      // ✅ Navigate to CoinPurchasePage instead of nonexistent BuyCoinsScreen
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const BuyCoinsScreen()),
+        MaterialPageRoute(
+          builder: (context) => CoinPurchasePage(
+            onCoinsUpdated: () {
+              Navigator.pop(context, true); // ✅ Return true after coins updated
+            },
+          ),
+        ),
       );
 
       if (result == true) {
-        // Refresh wallet if purchase happened
+        // ✅ Refresh wallet coins if purchase was successful
         _homeKey.currentState?.refreshWalletCoins();
       }
     } else {
@@ -34,7 +40,7 @@ class MainContainerState extends State<MainContainer> {
     }
   }
 
-  // ✅ Add this so main.dart can trigger wallet refresh after Razorpay
+  // ✅ Method to allow external trigger (like main.dart) to refresh wallet
   void refreshWallet() {
     _homeKey.currentState?.refreshWalletCoins();
   }
