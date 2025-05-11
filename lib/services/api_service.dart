@@ -382,29 +382,30 @@ class ApiService {
     }
   }
 
-  // ✅ Set User in_call_with Status
-  static Future<void> setUserInCallWith(String username) async {
+  // 🔵 Fetch Wallet Balance (New Method)
+  static Future<double?> fetchWalletBalance() async {
     final String? token = await AuthService.getToken();
     if (token == null) {
-      debugPrint('❌ No auth token found for setting in_call_with');
-      return;
+      debugPrint('❌ No auth token found.');
+      return null;
     }
 
     try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/api/set-in-call-with/'),
-        headers: {
-          'Authorization': 'Token $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'in_call_with': username}),
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/get-wallet-balance/'),
+        headers: {'Authorization': 'Token $token'},
       );
 
-      if (response.statusCode != 200) {
-        debugPrint('⚠️ Failed to update in_call_with: ${response.body}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['wallet_balance']; // Ensure this matches the backend response field
+      } else {
+        debugPrint("⚠️ Failed to fetch wallet balance: ${response.body}");
+        return null;
       }
     } catch (e) {
-      debugPrint('❌ Error setting in_call_with: $e');
+      debugPrint("❌ Exception fetching wallet balance: $e");
+      return null;
     }
   }
 }
