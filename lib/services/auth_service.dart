@@ -121,7 +121,7 @@ class AuthService {
     }
   }
 
-  // 💰 ✅ NEW METHOD: Fetch Wallet Balance directly from API (for Home screen, etc.)
+  // 💰 ✅ Fetch Wallet Balance directly from API
   static Future<Map<String, dynamic>?> fetchWalletBalance() async {
     final token = await getToken();
 
@@ -144,7 +144,7 @@ class AuthService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> json = jsonDecode(response.body);
         print('✅ Wallet fetched: ${json['data']}');
-        return json['data']; // Contains 'balance', 'earnings_coins', 'is_in_call'
+        return json['data']; // Includes keys like 'balance', 'earnings_coins', etc.
       } else {
         print('❌ Failed to fetch wallet balance: ${response.statusCode}, ${response.body}');
         return null;
@@ -155,7 +155,7 @@ class AuthService {
     }
   }
 
-  // 💾 Save token
+  // 🧾 Save token
   static Future<void> saveToken(String token) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -166,7 +166,7 @@ class AuthService {
     }
   }
 
-  // 💾 Save username
+  // 👤 Save username
   static Future<void> saveUsername(String username) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -199,7 +199,7 @@ class AuthService {
     }
   }
 
-  // 🗑 Logout
+  // 🗑 Logout user
   static Future<void> logout() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -211,7 +211,7 @@ class AuthService {
     }
   }
 
-  // ✅ Check if Logged In
+  // 🔍 Check login status
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null;

@@ -9,7 +9,7 @@ class HomeContent extends StatefulWidget {
   final Function(String) onCall;
   final int walletCoins;
   final VoidCallback onRefreshWallet;
-  final double? walletBalance; // Wallet balance passed in
+  final double? walletBalance;
 
   const HomeContent({
     Key? key,
@@ -29,13 +29,20 @@ class _HomeContentState extends State<HomeContent> {
   Future<void> _refreshUsers() async {
     final token = await AuthService.getToken();
     if (token != null && token.isNotEmpty) {
-      final response = await http.get(
-        Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
-        headers: {'Authorization': 'Token $token'},
-      );
-      if (response.statusCode == 200) {
-        final users = jsonDecode(response.body);
-        widget.onUsersUpdated(users['online_users']);
+      try {
+        final response = await http.get(
+          Uri.parse('https://vibezone-backend.fly.dev/api/online-users/'),
+          headers: {'Authorization': 'Token $token'},
+        );
+
+        if (response.statusCode == 200) {
+          final users = jsonDecode(response.body);
+          widget.onUsersUpdated(users['online_users']);
+        } else {
+          debugPrint("❌ Failed to fetch users: ${response.statusCode}");
+        }
+      } catch (e) {
+        debugPrint("⚠️ Error fetching users: $e");
       }
     }
   }
@@ -71,12 +78,17 @@ class _HomeContentState extends State<HomeContent> {
                       if (widget.walletBalance != null)
                         Text(
                           '₹${widget.walletBalance!.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
                       Text('🪙 ${widget.walletCoins}'),
                       ElevatedButton(
                         onPressed: _navigateToBuyCoins,
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                        ),
                         child: const Text('Buy Coins'),
                       ),
                     ],
@@ -84,7 +96,9 @@ class _HomeContentState extends State<HomeContent> {
                 ),
                 ElevatedButton(
                   onPressed: () => Navigator.pushNamed(context, '/profile'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
                   child: const Text('My Profile'),
                 ),
               ],
@@ -115,7 +129,11 @@ class _HomeContentState extends State<HomeContent> {
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: const [
-                                BoxShadow(color: Colors.black12, blurRadius: 4, spreadRadius: 2),
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  spreadRadius: 2,
+                                ),
                               ],
                             ),
                             padding: const EdgeInsets.all(8),
@@ -126,14 +144,17 @@ class _HomeContentState extends State<HomeContent> {
                                 const Icon(Icons.person, size: 40),
                                 Text(
                                   user['username'],
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 ElevatedButton(
                                   onPressed: () => widget.onCall(user['username']),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
                                   ),
                                   child: const Text('Call', style: TextStyle(fontSize: 12)),
                                 ),

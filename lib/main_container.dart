@@ -30,9 +30,9 @@ class MainContainerState extends State<MainContainer> {
   // Fetch wallet balance using AuthService
   Future<void> fetchWalletBalance() async {
     try {
-      final balanceData = await AuthService.getWalletBalance();
+      final balanceData = await AuthService.fetchWalletBalance();
       setState(() {
-        _walletBalance = balanceData['balance']?.toDouble() ?? 0.0;
+        _walletBalance = balanceData?['balance']?.toDouble() ?? 0.0;
       });
     } catch (e) {
       debugPrint("Error fetching wallet balance: $e");
